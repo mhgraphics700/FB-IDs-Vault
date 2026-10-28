@@ -1,0 +1,22 @@
+FB IDs Vault - GitHub par lagane ke steps (git install karne ki zaroorat nahi, sab browser se)
+
+1) github.com par login karein > New repository
+   Name: FB-IDs-Vault   |   Public select karein   |   Create repository
+
+2) Repo ke page par "uploading an existing file" par click karein.
+   Is zip ko extract karein, andar ke saare files aur folders (.github folder samet) drag & drop karein.
+   Commit changes dabayein.
+   (Agar .github folder nazar na aaye to Windows Explorer mein View > Show > Hidden items on karein.)
+
+3) Repo > Settings > Secrets and variables > Actions > New repository secret
+   FB_IDs_Vault_PRIVATE_signing_key.zip ke andar GITHUB_SECRETS.txt hai.
+   Us mein se 4 secrets ek ek kar ke daalein: KEYSTORE_PASSWORD, KEY_PASSWORD, KEY_ALIAS, KEYSTORE_BASE64.
+
+4) Repo > Releases > Create a new release
+   Choose a tag: v2.0 likhein > "Create new tag" > Publish release.
+   Actions tab mein build chalega (5-10 minute). Khatam hone par Release mein FB-IDs-Vault-v2.0.apk aa jayegi.
+
+5) APK phone par install karein. App mein Settings > App updates mein "username/FB-IDs-Vault" likhein.
+
+Nayi update dene ke liye: files badal kar upload karein, phir naya release banayein (tag v2.1, v2.2 ...).
+Tag ka number purani se bada hona chahiye. App khud "Update" ka button dikha degi.
