@@ -1,6 +1,13 @@
 package com.fbidsvault.app
 
 import android.annotation.SuppressLint
+import android.app.DownloadManager
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import androidx.core.content.FileProvider
+import java.io.File
 import android.content.ContentValues
 import android.content.Intent
 import android.content.res.Configuration
@@ -43,6 +50,44 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loader: WebViewAssetLoader
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var lastBack = 0L
+
+    // ---- background update download (APK from GitHub Releases) ----
+    private var dlId = -1L
+    private val ui = Handler(Looper.getMainLooper())
+    private fun apkFile() = File(getExternalFilesDir(null), "update.apk")
+    private fun js(code: String) { runOnUiThread { web.evaluateJavascript(code, null) } }
+
+    private fun finishDownload() {
+        dlId = -1L
+        val f = apkFile()
+        val info = packageManager.getPackageArchiveInfo(f.path, 0)
+        if (info == null || info.packageName != packageName) {
+            f.delete()
+            js("window.onUpdFail&&window.onUpdFail()")
+        } else js("window.onUpdReady&&window.onUpdReady()")
+    }
+
+    // polls the system download every 0.7 s and tells the page the percentage
+    private val poll = object : Runnable {
+        override fun run() {
+            if (dlId == -1L) return
+            val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+            val c = dm.query(DownloadManager.Query().setFilterById(dlId))
+            var again = true
+            if (c != null) {
+                if (c.moveToFirst()) {
+                    val st = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                    val got = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val tot = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                    if (st == DownloadManager.STATUS_SUCCESSFUL) { again = false; finishDownload() }
+                    else if (st == DownloadManager.STATUS_FAILED) { again = false; dlId = -1L; js("window.onUpdFail&&window.onUpdFail()") }
+                    else { val p = if (tot > 0) (got * 100 / tot).toInt() else 0; js("window.onUpdProgress&&window.onUpdProgress($p)") }
+                } else { again = false; dlId = -1L; js("window.onUpdFail&&window.onUpdFail()") }
+                c.close()
+            }
+            if (again) ui.postDelayed(this, 700)
+        }
+    }
 
     private val picker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         fileCallback?.onReceiveValue(if (uri != null) arrayOf(uri) else null)
@@ -162,6 +207,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        ui.removeCallbacksAndMessages(null)
         fileCallback?.onReceiveValue(null)
         fileCallback = null
         super.onDestroy()
@@ -219,6 +265,66 @@ class MainActivity : AppCompatActivity() {
             if (!url.startsWith("https://github.com/")) return
             runOnUiThread {
                 try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (_: Exception) {}
+            }
+        }
+
+        // Starts downloading the new APK in the background (GitHub links only)
+        @JavascriptInterface
+        fun downloadUpdate(url: String) {
+            if (!url.startsWith("https://github.com/") || !url.endsWith(".apk", true)) return
+            runOnUiThread {
+                if (dlId != -1L) return@runOnUiThread
+                try {
+                    val f = apkFile()
+                    if (f.exists()) f.delete()
+                    val req = DownloadManager.Request(Uri.parse(url))
+                        .setTitle("FB IDs Vault update")
+                        .setMimeType("application/vnd.android.package-archive")
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                        .setDestinationInExternalFilesDir(this@MainActivity, null, "update.apk")
+                    val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                    dlId = dm.enqueue(req)
+                    ui.post(poll)
+                } catch (e: Exception) {
+                    dlId = -1L
+                    js("window.onUpdFail&&window.onUpdFail()")
+                }
+            }
+        }
+
+        // true when a newer APK is already downloaded and waiting to be installed
+        @JavascriptInterface
+        fun updateReady(): Boolean = try {
+            val f = apkFile()
+            if (dlId != -1L || !f.exists()) false
+            else {
+                val info = packageManager.getPackageArchiveInfo(f.path, 0)
+                val cur = packageManager.getPackageInfo(packageName, 0)
+                if (info != null && info.packageName == packageName && info.versionName != cur.versionName) true
+                else { f.delete(); false }
+            }
+        } catch (e: Exception) { false }
+
+        @JavascriptInterface
+        fun installUpdate() {
+            runOnUiThread {
+                val f = apkFile()
+                if (!f.exists()) return@runOnUiThread
+                if (Build.VERSION.SDK_INT >= 26 && !packageManager.canRequestPackageInstalls()) {
+                    Toast.makeText(this@MainActivity, "Allow installs from this app, then tap Install again", Toast.LENGTH_LONG).show()
+                    try { startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))) } catch (_: Exception) {}
+                    return@runOnUiThread
+                }
+                try {
+                    val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.fileprovider", f)
+                    val i = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, "application/vnd.android.package-archive")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(i)
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "Could not open the installer", Toast.LENGTH_LONG).show()
+                }
             }
         }
 

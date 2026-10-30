@@ -336,7 +336,8 @@
     .side .logout.rep{background:rgba(255,255,255,.07);color:#CBD5E8;margin-top:8px}.side .logout.rep:hover{background:rgba(255,255,255,.12)}
     .rfbtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none}
     .rfbtn:active{transform:scale(.94)}
-    .rfbtn.spin .ic{animation:rfspin .8s linear infinite}
+    .rfbtn.spin .ic,.rfbtn.bg .ic{animation:rfspin .8s linear infinite}
+    .rfbtn.bg:not(.spin) .ic{opacity:.55}
     @keyframes rfspin{to{transform:rotate(360deg)}}
 
     /* ===== Modals, order detail, sheet connections ===== */
@@ -520,6 +521,75 @@
     .updbar .btn{width:auto;padding:9px 18px;border-radius:11px;font-size:13px;white-space:nowrap}
     .updbar .x{background:transparent;border:0;color:inherit;font-weight:700;cursor:pointer;padding:8px 6px}
     .hidden{display:none!important}
+
+    /* ===== PRO DASHBOARD v3 ===== */
+    :root{--bg:#F3F6FC;--surface:#fff;--surface2:#F6F8FD;--ink:#0B1324;--muted:#64708C;--line:#E4E9F4;--brand:#3B5BFF;--brand-d:#2B45D6;--brand-soft:#E9EEFF;--ac:linear-gradient(135deg,#4F6BFF,#7A5BFF);--r:18px;--r-sm:12px;--sh:0 1px 2px rgba(15,23,42,.04),0 12px 32px -18px rgba(15,23,42,.18)}
+    @media(prefers-color-scheme:dark){:root{--bg:#070B14;--surface:#0D1424;--surface2:#111A2E;--ink:#EAF0FF;--muted:#8A97B5;--line:#1A2540;--brand:#6482FF;--brand-d:#8AA0FF;--brand-soft:#15204A;--sh:0 1px 0 rgba(255,255,255,.04) inset,0 16px 36px -20px rgba(0,0,0,.8)}}
+    html,body{background:var(--bg)}
+    body{background:radial-gradient(900px 420px at 90% -8%,color-mix(in srgb,var(--brand) 15%,transparent),transparent 60%),var(--bg);background-attachment:fixed}
+    .side,.shell .side{background:var(--surface);border-right:1px solid var(--line);color:var(--muted);box-shadow:none}
+    .brand{color:var(--ink)}
+    .nav button{color:var(--muted)}.nav button:hover{color:var(--ink);background:var(--surface2)}
+    .nav button.on{background:var(--brand-soft);color:var(--brand);box-shadow:inset 3px 0 0 var(--brand)}
+    .sfoot{background:var(--surface2);border:1px solid var(--line);color:var(--muted)}.sfoot b{color:var(--ink)}.sfoot .meter{background:var(--line)}
+    .side .logout.rep{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+    .side .logout.rep:hover{border-color:var(--brand);color:var(--brand)}
+    @media(max-width:860px){.shell .side{border-radius:0 24px 24px 0;box-shadow:24px 0 60px -24px rgba(0,0,0,.6)}}
+    .top{background:color-mix(in srgb,var(--bg) 78%,transparent);border-bottom:1px solid var(--line)}
+    .sync{font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+    @media(max-width:700px){.sync{display:none}}
+    .card,.kpi,.sc{background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh)}
+    .card>h3:first-child::before{content:"";display:inline-block;width:4px;height:14px;border-radius:4px;background:var(--ac);margin-right:9px;vertical-align:-1px}
+    input,textarea{background:var(--surface2)}
+    /* gauge hero */
+    .hero{grid-template-columns:auto 1fr auto;align-items:center;background:linear-gradient(135deg,#4561FF,#6A4DF0 120%)}
+    .hero.low{background:linear-gradient(135deg,#F2711C,#C2410C)}
+    .gauge{--pc:0;position:relative;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#fff calc(var(--pc)*1%),rgba(255,255,255,.22) 0)}
+    .gauge::before{content:"";position:absolute;inset:6px;border-radius:50%;background:#4B56F0}
+    .hero.low .gauge::before{background:#D9560F}
+    .hero .gauge b{position:relative;font-size:13.5px;letter-spacing:0}
+    .hbar{grid-column:1/-1}
+    /* option chips (replace dropdowns) */
+    .opts{display:flex;flex-wrap:wrap;gap:8px}
+    .opt{flex:1 1 auto;min-width:78px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);font-weight:700;font-size:13.5px;cursor:pointer}
+    .opt small{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--line);color:var(--muted);font-variant-numeric:tabular-nums}
+    .opt:hover{border-color:var(--brand)}
+    .opt.on{background:var(--ac);border-color:transparent;color:#fff;box-shadow:0 10px 22px -12px var(--brand)}
+    .opt.on small{background:rgba(255,255,255,.24);color:#fff}
+    .opt.low:not(.on) small{background:#FDE7D3;color:#B45309}
+    .opt.zero:not(.on){opacity:.5}.opt:active{transform:scale(.97)}
+    .chip{background:var(--surface2)}.chip.on{background:var(--ac);color:#fff;border-color:transparent}
+    .sumline{min-height:18px;font-size:13px;font-weight:600;color:var(--muted);margin:-6px 0 12px}.sumline.bad{color:var(--bad)}
+    .btn{background:var(--ac);box-shadow:0 12px 24px -12px var(--brand)}.btn:hover{background:var(--ac);filter:brightness(1.08)}
+    .btn.ghost{background:var(--brand-soft);box-shadow:none}.btn.ghost:hover{background:var(--brand-soft);filter:brightness(.96)}
+    .btn:disabled::before{content:"";width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:rfspin .7s linear infinite}
+    .btn.ghost:disabled::before{border-color:color-mix(in srgb,var(--brand) 30%,transparent);border-top-color:var(--brand)}
+    .meter{height:10px;background:var(--surface2);border:1px solid var(--line)}
+    .meter i{background:linear-gradient(90deg,#14B88A,#35D9AE)}.meter.low i{background:linear-gradient(90deg,#F97316,#FDBA74)}
+    .bar i{background:color-mix(in srgb,var(--brand) 38%,transparent)}.bar:last-child i{background:var(--ac)}
+    .sg button.on{background:var(--ac);color:#fff;box-shadow:none}
+    .swrow .sg{flex:none}@media(max-width:480px){.swrow .sg{width:100%}}
+    /* new loading indicator: floating capsule with ring */
+    #loader{position:fixed;top:12px;left:50%;right:auto;height:auto;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 10px;border-radius:99px;overflow:visible;background:color-mix(in srgb,var(--surface) 86%,transparent);border:1px solid var(--line);box-shadow:0 14px 34px -14px rgba(0,0,0,.55);backdrop-filter:blur(14px);transform:translate(-50%,-18px) scale(.96);transition:opacity .2s,transform .25s}
+    #loader.on{transform:translate(-50%,0)}
+    #loader .ring{width:20px;height:20px;border-radius:50%;background:conic-gradient(transparent 0,var(--brand) 80%,#A08BFF);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));animation:rfspin .8s linear infinite}
+    #loader b{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap}
+    /* update download bar */
+    .pbar{height:10px;border-radius:99px;background:color-mix(in srgb,var(--brand) 18%,transparent);overflow:hidden;margin-top:8px}
+    .pbar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#4F6BFF,#9B7BFF,#4F6BFF);background-size:200% 100%;animation:pbs 1.2s linear infinite;box-shadow:0 0 14px color-mix(in srgb,var(--brand) 70%,transparent);transition:width .4s}
+    @keyframes pbs{to{background-position:-200% 0}}
+    .pct{font-weight:800;font-variant-numeric:tabular-nums}
+    body{background-attachment:scroll}
+    .btn.loading{position:relative;overflow:hidden;pointer-events:none;opacity:1}
+    .btn.loading::before{display:none}
+    .btn.loading::after{content:"";position:absolute;left:0;bottom:0;height:4px;width:100%;background:rgba(255,255,255,.92);transform-origin:left;animation:bgrow 7s cubic-bezier(.1,.7,.2,1) forwards}
+    .btn.loading .bspin{width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:rfspin .7s linear infinite}
+    .btn.loading{background:linear-gradient(110deg,#4F6BFF 30%,#8C74FF 50%,#4F6BFF 70%);background-size:220% 100%;animation:bshine 1.4s linear infinite}
+    @keyframes bgrow{from{transform:scaleX(.04)}to{transform:scaleX(.94)}}
+    @keyframes bshine{to{background-position:-220% 0}}
+    .top{backdrop-filter:none;-webkit-backdrop-filter:none;background:color-mix(in srgb,var(--bg) 94%,transparent)}
+    #updPanel{margin:0 0 14px}
+    @media(prefers-reduced-motion:reduce){#loader .ring,.pbar i{animation-duration:3s}}
   </style>
 </head>
 <body>
@@ -589,6 +659,7 @@
       <button data-t="sec" onclick="showTab('sec')"><svg class="ic"><use href="#i-gear"/></svg><span>Settings</span></button>
     </nav>
     <div class="sfoot">Remaining IDs<b id="sbAv">0</b><div class="meter" id="meter2"><i></i></div></div>
+    <button type="button" class="logout rep hidden" id="navUpd" onclick="showTab('sec');fbCheckUpdate(true)"><svg class="ic"><use href="#i-refresh"/></svg>Check for updates</button>
     <button type="button" class="logout rep" onclick="shareReport()"><svg class="ic"><use href="#i-share"/></svg>Share today's report</button>
     <button type="button" class="logout" onclick="logoutBtn()"><svg class="ic"><use href="#i-logout"/></svg>Logout</button>
   </aside>
@@ -597,6 +668,7 @@
     <header class="top">
       <button type="button" class="logo mlogo menubtn" onclick="toggleMenu()" aria-label="Menu"><svg class="ic"><use href="#i-menu"/></svg></button>
       <div><h1 id="pgT">Sell</h1><p id="pgS"></p></div>
+      <span class="sync" id="syncAge"></span>
       <span class="pill" id="pill">-</span>
       <button type="button" class="rfbtn" id="rfBtn" onclick="refreshNow()" title="Refresh from sheet" aria-label="Refresh"><svg class="ic"><use href="#i-refresh"/></svg></button>
       <button class="icbtn" onclick="lockApp()" title="Lock" aria-label="Lock"><svg class="ic"><use href="#i-lock"/></svg></button>
@@ -606,6 +678,7 @@
       <div class="verwarn hidden" id="verWarn"><b>Your Google Sheet script is old.</b> Passwords, Returns and categories will not work correctly until you update it: open the sheet, Extensions, Apps Script, paste the latest Code.gs, then Deploy, Manage deployments, Edit, New version, Deploy.<div id="verInfo" style="margin-top:6px;opacity:.85"></div><button type="button" class="btn sm ghost" style="margin-top:8px" onclick="showTab('sec')">Open Settings, Check connection</button></div>
       <section data-tab="sell" class="kpis2">
         <div class="hero" id="kMain">
+          <div class="gauge" id="gauge"><b id="gaugePc">0%</b></div>
           <div><span>Remaining stock</span><b id="sAv">0</b></div>
           <div class="hr"><span>Total IDs ever</span><b id="sTot">0</b></div>
           <div class="hbar"><i id="heroBar"></i></div>
@@ -637,16 +710,15 @@
             <button type="button" class="on" data-m="normal" onclick="setMode('normal')"><svg class="ic"><use href="#i-clock"/></svg><b>Normal</b><small>Oldest IDs first</small></button>
             <button type="button" data-m="fresh" onclick="setMode('fresh')"><svg class="ic"><use href="#i-zap"/></svg><b>Fresh</b><small>Newest added IDs</small></button>
           </div>
-          <div class="row2">
-            <div class="field"><label for="selTyS">Names type</label><select id="selTyS" onchange="selTy(this.value)"></select></div>
-            <div class="field"><label for="selGeS">Gender</label><select id="selGeS" onchange="selGe(this.value)"></select></div>
-          </div>
+          <div class="field"><label>Names type</label><div class="opts" id="selTyS" role="radiogroup" aria-label="Names type"></div></div>
+          <div class="field"><label>Gender</label><div class="opts" id="selGeS" role="radiogroup" aria-label="Gender"></div></div>
           <div class="selinfo" id="selInfo"></div>
           <div class="chips">
-            <button class="chip" onclick="setQty(10)">10</button><button class="chip" onclick="setQty(25)">25</button>
-            <button class="chip" onclick="setQty(50)">50</button><button class="chip" onclick="setQty(100)">100</button>
-            <button class="chip" onclick="setQty(500)">500</button><span class="tot" id="tot"></span>
+            <button class="chip" data-q="10" onclick="setQty(10)">10</button><button class="chip" data-q="25" onclick="setQty(25)">25</button>
+            <button class="chip" data-q="50" onclick="setQty(50)">50</button><button class="chip" data-q="100" onclick="setQty(100)">100</button>
+            <button class="chip" data-q="500" onclick="setQty(500)">500</button><button class="chip" onclick="setQty(-1)">Max</button><span class="tot" id="tot"></span>
           </div>
+          <div class="sumline" id="sumLine"></div>
           <button class="btn" id="sellBtn" onclick="sell()">Get IDs</button>
           <div class="err" id="sellErr"></div>
           <button type="button" class="btn ghost hidden" id="lastBtn" style="margin-top:8px" onclick="showModal('resModal')"><svg class="ic"><use href="#i-eye"/></svg>Show last IDs again</button>
@@ -686,10 +758,8 @@
           <span class="cbadge" id="addInfo"></span>
         </div>
         <div class="err hidden" id="addWarn" style="margin:0 0 10px">Sheet script is old. Deploy the latest Code.gs, otherwise categories are not saved.</div>
-        <div class="row2">
-          <div class="field"><label for="addTyS">Names type</label><select id="addTyS" onchange="addTy(this.value)"></select></div>
-          <div class="field"><label for="addGeS">Gender</label><select id="addGeS" onchange="addGe(this.value)"></select></div>
-        </div>
+        <div class="field"><label>Names type</label><div class="opts" id="addTyS" role="radiogroup" aria-label="Names type"></div></div>
+        <div class="field"><label>Gender</label><div class="opts" id="addGeS" role="radiogroup" aria-label="Gender"></div></div>
         <div class="arow"><label>Password</label>
           <div class="sg" id="pwSeg">
             <button type="button" class="on" data-v="none" onclick="setPw('none')">None</button>
@@ -770,9 +840,7 @@
           <div><h3>Security</h3><p class="sub">Protect the IDs on this phone.</p></div></div>
         <div class="setbody swlist">
           <div class="swrow"><div><b>Auto-lock</b><small>Ask for the PIN again after the app was in the background</small></div>
-            <select id="alSel" onchange="fbSetAutoLock(this.value)" aria-label="Auto-lock time">
-              <option value="0">Off</option><option value="1">1 minute</option><option value="5">5 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option>
-            </select></div>
+            <div class="sg" id="alSeg"><button type="button" data-v="0" onclick="fbSetAutoLock(0)">Off</button><button type="button" data-v="1" onclick="fbSetAutoLock(1)">1m</button><button type="button" data-v="5" onclick="fbSetAutoLock(5)">5m</button><button type="button" data-v="15" onclick="fbSetAutoLock(15)">15m</button><button type="button" data-v="30" onclick="fbSetAutoLock(30)">30m</button></div></div>
           <div class="swrow hidden" id="secRow"><div><b>Block screenshots</b><small>Hides IDs from screenshots and the recent apps screen</small></div>
             <label class="tgl"><input type="checkbox" id="secChk" onchange="fbSetSecure(this.checked)" aria-label="Block screenshots"><i></i></label></div>
         </div>
@@ -791,8 +859,11 @@
       </section>
       <section class="card setcard hidden" id="updCard">
         <div class="sethead"><div class="seticon"><svg class="ic"><use href="#i-refresh"/></svg></div>
-          <div><h3>App updates</h3><p class="sub">Version <b id="verNow">-</b>. New versions are published on GitHub.</p></div></div>
+          <div><h3>App updates</h3><p class="sub">Version <b id="verNow">-</b>. The app checks GitHub by itself and downloads new versions in the background.</p></div></div>
         <div class="setbody">
+          <div class="swlist" style="padding:0 0 12px"><div class="swrow"><div><b>Download in background</b><small>New versions download automatically, you only tap Install</small></div>
+            <label class="tgl"><input type="checkbox" id="adlChk" checked onchange="fbSetAutoDl(this.checked)" aria-label="Download updates in background"><i></i></label></div></div>
+          <div class="verwarn updbar hidden" id="updPanel"></div>
           <div class="field"><label for="repoIn">GitHub repository (username/repo)</label>
             <input id="repoIn" placeholder="username/FB-IDs-Vault" autocomplete="off" autocapitalize="off" spellcheck="false" onchange="fbSetRepo(this.value)"></div>
           <button class="btn ghost" id="updBtn" onclick="fbCheckUpdate(true)"><svg class="ic"><use href="#i-refresh"/></svg>Check for updates</button>
@@ -884,7 +955,7 @@
   </div>
 </div>
 
-<div id="loader" aria-hidden="true"><i></i></div>
+<div id="loader" aria-hidden="true"><span class="ring"></span><b id="ldTxt">Syncing</b></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -934,6 +1005,7 @@
     }
     index();
   }
+  const setH=(id,h)=>{const e=$(id);if(e&&e.__h!==h){e.__h=h;e.innerHTML=h}};
   function rebuild(){
     const s=SNAP||{stock:[],sales:[],bad:[]};
     DB={stock:s.stock.slice(),sales:s.sales.slice(),bad:s.bad||[],tags:Object.assign({},s.tags||{}),pw:Object.assign({},s.pw||{})}; index();
@@ -941,13 +1013,15 @@
   }
   const netMode=()=>(typeof google!=='undefined'&&google.script&&google.script.run)?'page':'link';
   let BUSY=0, LT=0;
-  function busy(d){BUSY=Math.max(0,BUSY+d);clearTimeout(LT);if(BUSY>0)LT=setTimeout(()=>$('loader').classList.add('on'),120);else $('loader').classList.remove('on')}
-  async function net(req){busy(1);try{return await net0(req)}finally{busy(-1)}}
+  const LDL={sync:'Syncing with sheet',sell:'Getting your IDs',add:'Adding stock',undo:'Undoing order',returns:'Returning IDs',replacemany:'Replacing IDs',replace:'Replacing ID',setpass:'Saving password',changepin:'Changing PIN',about:'Checking connection'};
+  function busy(d,a){BUSY=Math.max(0,BUSY+d);clearTimeout(LT);if(BUSY>0){const t=$('ldTxt');if(t&&a)t.textContent=LDL[a]||'Working';LT=setTimeout(()=>$('loader').classList.add('on'),120)}else $('loader').classList.remove('on')}
+  async function net(req){const bg=req&&(req.action==='sync'||req.action==='sell');if(!bg)busy(1,req&&req.action);try{return await net0(req)}finally{if(!bg)busy(-1)}}   // sheet sync runs silently in the background (no capsule)
   async function net0(req){
     const c=new AbortController(), t=setTimeout(()=>c.abort(),60000);
     try{
       const r=await fetch(APP_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({},req,{pin:PIN})),signal:c.signal});
       const txt=await r.text();
+      if(req.action==='sync'&&!(req.ops&&req.ops.length)){if(txt===window.__lastSync)return{same:true};window.__lastSync=txt}
       try{return JSON.parse(txt)}catch(x){throw new Error('Server did not return data. Check that web app access is Anyone and the latest version is deployed.')}
     }finally{clearTimeout(t)}
   }
@@ -955,14 +1029,16 @@
     const sent=Q.slice();
     try{
       const r=await net({action:'sync',ops:sent});
+      if(r.same){LASTPULL=Date.now();ONLINE=true;return{}}   // nothing changed: skip parse, save and rebuild
       if(!r.ok){if(!$('app').classList.contains('hidden'))toast(r.error);return{err:r.error}}
       r.res.forEach(x=>{RES[x.id]=x;if(!x.ok)toast(x.error)});
       Q=Q.slice(sent.length); LS.set('uvq',Q);
       TAGS_OLD=!!(r.snap&&r.snap.tags===undefined); PW_OLD=!!(r.snap&&r.snap.pw===undefined); SCRIPT_VER=(r.snap&&r.snap.ver)||0; SNAP=r.snap; LS.set('uvs',SNAP); LASTPULL=Date.now(); ONLINE=true; rebuild();
       return{};
-    }catch(e){ONLINE=false;LASTERR=String((e&&e.message)||e);return{net:true}}
+    }catch(e){ONLINE=false;window.SYNCFAIL=Date.now();LASTERR=String((e&&e.message)||e);return{net:true}}
   }
-  function sync(){const p=SP.then(doSync);SP=p;return p}
+  let BGN=0;
+  function sync(){const b=$('rfBtn');BGN++;if(b)b.classList.add('bg');const p=SP.then(doSync);SP=p;const done=()=>{if(--BGN<=0&&b)b.classList.remove('bg')};p.then(done,done);return p}
   function stats(){
     const t0=new Date();t0.setHours(0,0,0,0);
     const T=t0.getTime(), m0=new Date(t0.getFullYear(),t0.getMonth(),1).getTime();
@@ -1085,9 +1161,15 @@
     $('app').classList.add('hidden'); $('login').classList.remove('hidden');
     setTimeout(()=>p.focus(),50);
   }
-  function setQty(n){$('qty').value=n; updTot()}
-  function updTot(){const q=Number($('qty').value),r=Number($('rate').value);$('tot').textContent=(q&&r)?'Total '+money(q*r):''}
-  function setMode(m){MODE=m; document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m))}
+  function setQty(n){$('qty').value=n<0?cc(CATS,SEL.ty,SEL.ge):n; updTot()}
+  function updTot(){
+    const q=Number($('qty').value),r=Number($('rate').value);$('tot').textContent=(q&&r)?'Total '+money(q*r):'';
+    const el=$('sumLine');if(!el)return;const av=cc(CATS,SEL.ty,SEL.ge);
+    document.querySelectorAll('.chips .chip[data-q]').forEach(b=>b.classList.toggle('on',Number(b.dataset.q)===q));
+    el.className='sumline'+(q>av?' bad':'');
+    el.textContent=q?(q>av?'Only '+money(av)+' available in this category':money(q)+' IDs \u00b7 '+catName(SEL.ty,SEL.ge).replace(', ',' \u00b7 ')+' \u00b7 '+(MODE==='fresh'?'Fresh':'Oldest first')):'';
+  }
+  function setMode(m){MODE=m; document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m)); try{updTot()}catch(e){}}
   function eye(b){const i=b.previousElementSibling, show=i.type==='password'; i.type=show?'text':'password'; b.innerHTML=ic(show?'eyeoff':'eye')}
   const ADDS={pos:'end',pw:'none'};
   const segSet=(id,v)=>document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
@@ -1166,7 +1248,7 @@
   function fillRate(){
     const n=($('cust').value||'').trim().toLowerCase(); if(!n||!DB)return;
     let best=null; DB.sales.forEach(x=>{if(x.status!=='Undone'&&String(x.customer).trim().toLowerCase()===n&&Number(x.rate)>0&&(!best||Number(x.date)>Number(best.date)))best=x});
-    const r=$('rate'); if(best&&(r.value===''||r.value===AUTO)){r.value=best.rate;AUTO=String(best.rate);updTot()}
+    const r=$('rate'); if(best&&r.value===''){r.value=best.rate;AUTO=String(best.rate);updTot()}
   }
   function refreshBio(){
     let ok=false; try{ok=!!(window.Android&&Android.canBio&&Android.canBio()&&localStorage.getItem('uvp')!==null)}catch(e){}
@@ -1208,26 +1290,22 @@
   }
   function drawNames(){
     const all=allNames(), q=($('cust').value||'').trim().toLowerCase();
-    $('custNames').innerHTML=all.slice(0,300).map(n=>'<option value="'+esc(n)+'"></option>').join('');
+    setH('custNames',all.slice(0,300).map(n=>'<option value="'+esc(n)+'"></option>').join(''));
     NAMES=all.filter(n=>!q||(n.toLowerCase().includes(q)&&n.toLowerCase()!==q)).slice(0,10);
     try{fillRate()}catch(e){}
-    $('nchips').innerHTML=NAMES.map((n,i)=>'<button type="button" class="nchip" onclick="pickName('+i+')">'+esc(n)+'</button>').join('');
+    setH('nchips',NAMES.map((n,i)=>'<button type="button" class="nchip" onclick="pickName('+i+')">'+esc(n)+'</button>').join(''));
   }
   function pickName(i){$('cust').value=NAMES[i]||'';drawNames();$('qty').focus()}
   function drawCats(){
-    const fillSel=(id,arr,cur,count)=>{
-      const el=$(id); if(!el)return;
-      if(!el.options.length)arr.forEach(x=>{const o=document.createElement('option');o.value=x[0];el.appendChild(o)});
-      Array.from(el.options).forEach((o,i)=>{const t=arr[i][1]+(count?' ('+money(count(arr[i][0]))+')':'');if(o.textContent!==t)o.textContent=t});
-      if(el.value!==cur)el.value=cur;
-    };
-    fillSel('selTyS',[['','Any']].concat(TYPES),SEL.ty,k=>cc(CATS,k,SEL.ge));
-    fillSel('selGeS',[['','Any']].concat(GENS),SEL.ge,k=>cc(CATS,SEL.ty,k));
-    fillSel('addTyS',[TYPES[3]].concat(TYPES.slice(0,3)),ADDC.ty);
-    fillSel('addGeS',[GENS[2]].concat(GENS.slice(0,2)),ADDC.ge);
+    const optsHtml=(arr,cur,fn,count)=>arr.map(x=>{const n=count?count(x[0]):null;return '<button type="button" class="opt'+(x[0]===cur?' on':'')+(n===0?' zero':n>0&&n<=10?' low':'')+'" role="radio" aria-checked="'+(x[0]===cur)+'" onclick="'+fn+'(\''+x[0]+'\')">'+x[1]+(n===null?'':'<small>'+money(n)+'</small>')+'</button>'}).join('');
+    const put=(id,h)=>{const e=$(id);if(e&&e.innerHTML!==h)e.innerHTML=h};
+    put('selTyS',optsHtml([['','Any']].concat(TYPES),SEL.ty,'selTy',k=>cc(CATS,k,SEL.ge)));
+    put('selGeS',optsHtml([['','Any']].concat(GENS),SEL.ge,'selGe',k=>cc(CATS,SEL.ty,k)));
+    put('addTyS',optsHtml([TYPES[3]].concat(TYPES.slice(0,3)),ADDC.ty,'addTy'));
+    put('addGeS',optsHtml([GENS[2]].concat(GENS.slice(0,2)),ADDC.ge,'addGe'));
     $('addInfo').textContent=catName(ADDC.ty,ADDC.ge).replace(', ',' \u00b7 ');
     $('addWarn').classList.toggle('hidden',!TAGS_OLD); try{cnt()}catch(e){}
-    $('selInfo').textContent=money(cc(CATS,SEL.ty,SEL.ge))+' IDs available'+((SEL.ty||SEL.ge)?' in this category':'');
+    $('selInfo').textContent=money(cc(CATS,SEL.ty,SEL.ge))+' IDs available'+((SEL.ty||SEL.ge)?' in this category':''); try{updTot()}catch(e){}
     $('cgrid').innerHTML='<tr><th></th>'+GENS.map(g=>'<th>'+g[1]+'</th>').join('')+'<th>Total</th></tr>'+TYPES.map(t=>'<tr><td>'+t[1]+'</td>'+GENS.map(g=>{const n=CATS[t[0]+g[0]]||0;return'<td class="'+(n?'':'z')+'">'+n+'</td>'}).join('')+'<td><b>'+cc(CATS,t[0],'')+'</b></td></tr>').join('')
       +'<tr><td>All</td>'+GENS.map(g=>'<td><b>'+cc(CATS,'',g[0])+'</b></td>').join('')+'<td><b>'+cc(CATS,'','')+'</b></td></tr>';
   }
@@ -1240,16 +1318,16 @@
     set('eToday',s.earnToday);set('eMonth',s.earnMonth);set('eAll',s.earnAll);set('sbAv',s.available);
     const pc=s.total?Math.round(s.available/s.total*100):0;
     ['meter','meter2'].forEach(i=>{$(i).classList.toggle('low',s.low);$(i).firstElementChild.style.width=pc+'%'});
-    $('kMain').classList.toggle('low',s.low); $('heroBar').style.width=pc+'%'; try{drawNames()}catch(e){} try{drawCats()}catch(e){}
+    $('kMain').classList.toggle('low',s.low); $('heroBar').style.width=pc+'%'; $('gauge').style.setProperty('--pc',pc); $('gaugePc').textContent=pc+'%'; try{drawNames()}catch(e){} try{drawCats()}catch(e){}
     $('stTxt').textContent=money(s.available)+' of '+money(s.total)+' IDs left ('+pc+'%)';
     const p=$('pill'); p.textContent=(s.online?'':'Offline, ')+(s.pending?s.pending+' waiting to sync, ':'')+(s.low?'Low stock: '+s.available+' left':s.available+' IDs ready'); p.classList.toggle('low',s.low||!s.online);
     const mx=Math.max.apply(null,s.last7.map(x=>x.n).concat(1));
-    $('chart').innerHTML=s.last7.map(x=>'<div class="bar"><em>'+x.n+'</em><i style="height:'+Math.round(x.n/mx*110)+'px"></i>'+x.l+'</div>').join('');
+    setH('chart',s.last7.map(x=>'<div class="bar"><em>'+x.n+'</em><i style="height:'+Math.round(x.n/mx*110)+'px"></i>'+x.l+'</div>').join(''));
   }
   async function sell(){
     const c0=$('cust').value.trim().toLowerCase(), q0=Number($('qty').value);
     if(c0&&q0&&DB&&DB.sales.some(x=>x.status!=='Undone'&&String(x.customer).trim().toLowerCase()===c0&&Number(x.qty)===q0&&Date.now()-Number(x.date)<120000)&&!confirm('The same order ('+q0+' IDs) was just given to this customer. Give again?'))return;
-    $('sellErr').textContent=''; $('sellBtn').disabled=true; $('sellBtn').textContent='Processing…';
+    $('sellErr').textContent=''; $('sellBtn').disabled=true; $('sellBtn').classList.add('loading'); $('sellBtn').innerHTML='<span class="bspin"></span><span>Getting your IDs…</span>';
     const customer=$('cust').value.trim();
     const r=await run({action:'sell',customer,qty:$('qty').value,rate:$('rate').value,mode:MODE,ty:SEL.ty,ge:SEL.ge},'sellErr');
     if(r){
@@ -1264,13 +1342,14 @@
       }
       $('uids').textContent=LAST.join('\n');
       drawResPw(); drawResMeta(customer,r); showModal('resModal'); $('lastBtn').classList.remove('hidden');
-      renderStats(r.stats); $('cust').value=''; $('qty').value=''; $('rate').value=''; AUTO=''; updTot(); drawNames(); if(r.stats.low)toast('Low stock: only '+r.stats.available+' IDs left');
+      renderStats(r.stats); $('cust').value=''; $('qty').value=''; updTot();   // the rate stays until you change it
+      drawNames(); if(r.stats.low)toast('Low stock: only '+r.stats.available+' IDs left');
     }
-    $('sellBtn').disabled=false; $('sellBtn').textContent='Get IDs';
+    $('sellBtn').disabled=false; $('sellBtn').classList.remove('loading'); $('sellBtn').textContent='Get IDs';
   }
   async function addStock(){
     $('addErr').textContent='';
-    const ty=$('addTyS').value||'X', ge=$('addGeS').value||'X', code=ty+ge;   // read the category straight from the dropdowns
+    const ty=ADDC.ty||'X', ge=ADDC.ge||'X', code=ty+ge;   // category chosen with the option chips
     ADDC.ty=ty; ADDC.ge=ge;
     const front=ADDS.pos==='front', pass=ADDS.pw==='same'?$('addPass').value.trim():'', hadPass=ADDS.pw==='line'||!!pass;
     if(ADDS.pw==='same'&&!pass){$('addErr').textContent='Type the password, or choose None';return}
@@ -1585,9 +1664,11 @@
   // Auto refresh every 15 seconds (picks up IDs pasted into the Sheet)
   setInterval(async()=>{
     if(document.hidden||$('app').classList.contains('hidden'))return;
-    if(Q.length||Date.now()-LASTPULL>30000)await sync();
+    const failedRecently=Date.now()-(window.SYNCFAIL||0)<30000;   // back off 30 s after a failed sync
+    if(Q.length||(!failedRecently&&Date.now()-LASTPULL>15000))await sync();
     renderStats(stats());
-  },15000);
+  },8000);
+  window.addEventListener('online',()=>{if(!$('app').classList.contains('hidden'))sync().then(()=>renderStats(stats()))});
 
   // Auto sign-in (PIN saved on this device, valid for 24 hours)
   (async function(){
@@ -1617,7 +1698,7 @@
 
   /* Auto-lock (minutes, 0 = off). Default 5. */
   const alMin=()=>{const v=lsGet('uval');return v===null?5:Number(v)||0};
-  window.fbSetAutoLock=v=>{lsPut('uval',String(Number(v)||0));toast(Number(v)?'Auto-lock: '+v+' min':'Auto-lock is off')};
+  window.fbSetAutoLock=v=>{lsPut('uval',String(Number(v)||0));segSet('alSeg',String(Number(v)||0));toast(Number(v)?'Auto-lock: '+v+' min':'Auto-lock is off')};
   let hiddenAt=0;
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){hiddenAt=Date.now();return}
@@ -1625,7 +1706,7 @@
     if(hiddenAt&&m>0&&appOpen()&&Date.now()-hiddenAt>m*60000){hiddenAt=0;lockApp();return}
     hiddenAt=0;
   },true);
-  const al=g('alSel'); if(al)al.value=String(alMin());
+  segSet('alSeg',String(alMin()));
 
   /* Screenshot block (Android only) */
   const hasAnd=()=>!!(window.Android&&Android.setSecure);
@@ -1704,12 +1785,14 @@
   },90000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)stopped=false});
 
-  /* --- Update check --- */
+  /* --- Update: check, background download, install --- */
   const nums=v=>String(v||'').replace(/^[^0-9]*/,'').split('.').map(x=>parseInt(x,10)||0);
   function newer(a,b){const x=nums(a),y=nums(b);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d>0}return false}
   const getRepo=()=>(lsGet('uvrepo')||DEFAULT_REPO).trim();
   const repoSet=()=>/^[\w.-]+\/[\w.-]+$/.test(getRepo())&&!/^YOUR_/.test(getRepo());
   window.fbSetRepo=v=>{v=String(v||'').trim().replace(/^https?:\/\/github\.com\//i,'').replace(/\.git$/i,'').replace(/\/$/,'');lsPut('uvrepo',v);g('repoIn').value=v;lsPut('uvupd','0');toast(repoSet()?'Update source saved':'Use the form username/repo')};
+  const autoDl=()=>lsGet('uvadl')!=='0';
+  window.fbSetAutoDl=on=>{lsPut('uvadl',on?'1':'0');toast(on?'Updates will download in the background':'Auto-download is off')};
 
   async function latest(){
     const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);
@@ -1719,23 +1802,39 @@
       if(!r.ok)throw 0;
       const j=await r.json();
       const apk=(j.assets||[]).find(a=>/\.apk$/i.test(a.name));
-      return{ver:String(j.tag_name||''),url:apk?apk.browser_download_url:j.html_url,page:j.html_url,notes:String(j.body||'').slice(0,300)};
+      return{ver:String(j.tag_name||''),url:apk?apk.browser_download_url:j.html_url,apk:!!apk,page:j.html_url};
     }finally{clearTimeout(t)}
   }
-  function banner(u){
-    const old=g('updBar');if(old)old.remove();
-    const m=document.querySelector('main');if(!m)return;
-    const d=document.createElement('div');d.id='updBar';d.className='verwarn updbar';
-    const t=document.createElement('div');t.className='t';
-    const b=document.createElement('b');b.textContent='New version '+u.ver.replace(/^v/i,'')+' is ready.';
-    t.appendChild(b);t.appendChild(document.createTextNode(' Download it and install over the current app. Your data stays in your Google Sheet.'));
-    const go=document.createElement('button');go.className='btn';go.textContent='Update';go.onclick=()=>{try{Android.openUrl(u.url)}catch(e){}};
-    const x=document.createElement('button');x.className='x';x.textContent='Later';x.onclick=()=>{lsPut('uvskip',u.ver);d.remove()};
-    d.appendChild(t);d.appendChild(go);d.appendChild(x);m.insertBefore(d,m.firstChild);
+  let UPD=null,UST='idle',UPCT=0;   // idle | available | downloading | ready | fail
+  function updHtml(later){
+    const v=UPD?esc(UPD.ver.replace(/^v/i,'')):'';
+    if(UST==='downloading')return '<div class="t"><b>Downloading update '+v+'</b><div class="pbar"><i style="width:'+UPCT+'%"></i></div></div><span class="pct">'+UPCT+'%</span>';
+    if(UST==='ready')return '<div class="t"><b>'+(v?'Update '+v:'An update')+' is ready.</b> Tap Install. Your data stays in the Google Sheet.</div><button class="btn" onclick="fbInstall()">Install now</button>';
+    if(UST==='fail')return '<div class="t"><b>Download failed.</b> Check your internet and try again.</div><button class="btn" onclick="fbDownload()">Retry</button>';
+    if(UST==='available')return '<div class="t"><b>New version '+v+' is available.</b></div><button class="btn" onclick="fbDownload()">'+(UPD&&UPD.apk?'Download':'Open')+'</button>'+(later?'<button class="x" onclick="fbLater()">Later</button>':'');
+    return '';
   }
+  function paintUpd(){
+    const h=updHtml(true),m=document.querySelector('main');let d=g('updBar');
+    if(!h){if(d)d.remove()}else if(m){if(!d){d=document.createElement('div');d.id='updBar';d.className='verwarn updbar';m.insertBefore(d,m.firstChild)}d.innerHTML=h}
+    const p=g('updPanel');if(p){const k=updHtml(false);p.innerHTML=k;p.classList.toggle('hidden',!k)}
+  }
+  window.onUpdProgress=p=>{UST='downloading';UPCT=p;paintUpd()};
+  window.onUpdReady=()=>{UST='ready';paintUpd();toast('Update downloaded, ready to install')};
+  window.onUpdFail=()=>{UST='fail';paintUpd()};
+  window.fbDownload=()=>{
+    if(!UPD)return;
+    if(!UPD.apk){try{Android.openUrl(UPD.page||UPD.url)}catch(e){}return}
+    UST='downloading';UPCT=0;paintUpd();
+    try{Android.downloadUpdate(UPD.url)}catch(e){UST='fail';paintUpd()}
+  };
+  window.fbInstall=()=>{try{Android.installUpdate()}catch(e){}};
+  window.fbLater=()=>{if(UPD)lsPut('uvskip',UPD.ver);const d=g('updBar');if(d)d.remove()};
+
   window.fbCheckUpdate=async function(manual){
     if(!hasAnd())return;
     const msg=g('updMsg'),btn=g('updBtn');let cur='';try{cur=Android.appVersion()}catch(e){}
+    if(UST==='downloading'){if(manual)toast('Update is downloading');return}
     if(manual){msg.style.color='';msg.textContent='Checking...';btn.disabled=true}
     try{
       if(!repoSet()){if(manual)msg.textContent='Enter your GitHub repository above (username/repo) first.';return}
@@ -1743,26 +1842,50 @@
       lsPut('uvupd',String(Date.now()));
       if(u.none||!u.ver){if(manual)msg.textContent='No release published yet.';return}
       if(newer(u.ver,cur)){
-        if(manual||lsGet('uvskip')!==u.ver)banner(u);
+        UPD=u;lsPut('uvupdver',u.ver);
+        let rdy=false;try{rdy=Android.updateReady()}catch(e){}
+        if(rdy)UST='ready';
+        else if(autoDl()&&u.apk){fbDownload();return}
+        else UST='available';
+        if(UST!=='available'||manual||lsGet('uvskip')!==u.ver)paintUpd();
         if(manual){msg.style.color='var(--brand)';msg.textContent='Version '+u.ver.replace(/^v/i,'')+' is available.'}
-      }else if(manual){msg.style.color='var(--ok)';msg.textContent='You have the latest version ('+cur+').'}
+      }else{
+        if(UST!=='downloading'){UST='idle';paintUpd()}
+        if(manual){msg.style.color='var(--ok)';msg.textContent='You have the latest version ('+cur+').'}
+      }
     }catch(e){if(manual){msg.style.color='';msg.textContent='Could not check. Check your internet.'}}
     finally{if(manual)btn.disabled=false}
   };
   if(hasAnd()){
     const c=g('updCard');if(c)c.classList.remove('hidden');
+    const nb=g('navUpd');if(nb)nb.classList.remove('hidden');
     try{g('verNow').textContent=Android.appVersion()}catch(e){}
     {const r=lsGet('uvrepo');if(r)g('repoIn').value=r}
+    const ac=g('adlChk');if(ac)ac.checked=autoDl();
   }
+  /* background: check when the app opens, when it comes back to the front, and every 10 minutes (at most once per 30 minutes) */
   function autoUpd(){
-    if(!hasAnd()||!repoSet())return;
-    if(Date.now()-Number(lsGet('uvupd')||0)<12*3600*1000)return;
-    setTimeout(()=>fbCheckUpdate(false),4000);
+    if(!hasAnd())return;
+    try{if(UST==='idle'&&Android.updateReady()){UST='ready';UPD=UPD||{ver:lsGet('uvupdver')||'',url:'',apk:true};paintUpd()}}catch(e){}
+    if(!repoSet()||Date.now()-Number(lsGet('uvupd')||0)<30*60*1000)return;
+    setTimeout(()=>fbCheckUpdate(false),3000);
   }
+  setInterval(()=>{if(appOpen()&&!document.hidden)autoUpd()},10*60*1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&appOpen())autoUpd()});
+  /* "Synced 12s ago" next to the status pill */
+  setInterval(()=>{
+    const e=g('syncAge');if(!e||!appOpen())return;
+    const s=LASTPULL?Math.round((Date.now()-LASTPULL)/1000):0;
+    e.textContent=!s?'':s<10?'Synced just now':s<60?'Synced '+s+'s ago':'Synced '+Math.round(s/60)+' min ago';
+  },5000);
 
   /* run when the app opens (after login / auto sign-in) */
+  /* remember the last Names type, Gender, mode and rate */
+  const _ut=window.updTot;
+  window.updTot=function(){const r=_ut.apply(this,arguments);lsPut('uvsell',JSON.stringify({ty:SEL.ty,ge:SEL.ge,m:MODE,r:$('rate').value}));return r};
+  function restoreSell(){try{const o=JSON.parse(lsGet('uvsell')||'{}');SEL.ty=o.ty||'';SEL.ge=o.ge||'';if(o.m)setMode(o.m);if(o.r&&!$('rate').value)$('rate').value=o.r;drawCats()}catch(e){}}
   const _enter=window.enter;
-  if(typeof _enter==='function'){window.enter=function(){const r=_enter.apply(this,arguments);try{warm();autoUpd()}catch(e){}return r}}
+  if(typeof _enter==='function'){window.enter=function(){const r=_enter.apply(this,arguments);try{restoreSell()}catch(e){}try{warm();autoUpd()}catch(e){}return r}}
 })();
 </script>
 </body>
