@@ -580,6 +580,25 @@
     @keyframes pbs{to{background-position:-200% 0}}
     .pct{font-weight:800;font-variant-numeric:tabular-nums}
     body{background-attachment:scroll}
+    /* popups: sheets, dialogs, toasts */
+    .modal,.dlg{background:rgba(4,8,18,.66);backdrop-filter:blur(4px)}
+    .sheetbox{border-radius:26px;box-shadow:0 30px 80px -24px rgba(0,0,0,.75)}
+    .modal:not(.hidden) .sheetbox{animation:popIn .26s cubic-bezier(.2,.8,.2,1)}
+    @keyframes popIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+    @media(max-width:600px){.modal:not(.center) .sheetbox::before{content:"";display:block;width:42px;height:4px;border-radius:4px;background:var(--line);margin:-6px auto 14px}.modal:not(.hidden) .sheetbox{animation-name:sheetUp}@keyframes sheetUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}}
+    .mhead h3{letter-spacing:-.02em}.mhead .icbtn{border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
+    .okring{background:linear-gradient(135deg,color-mix(in srgb,var(--ok) 22%,transparent),color-mix(in srgb,var(--ok) 8%,transparent))}
+    .dlg{position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;padding:18px}
+    .dlg.hidden{display:none}
+    .dbox{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:26px 22px 20px;text-align:center;box-shadow:0 30px 80px -24px rgba(0,0,0,.8);animation:popIn .24s cubic-bezier(.2,.8,.2,1)}
+    .dic{width:58px;height:58px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;font-size:28px;font-weight:800;background:var(--brand-soft);color:var(--brand);box-shadow:0 0 0 8px color-mix(in srgb,var(--brand) 9%,transparent)}
+    .dic.bad{background:#FFE9EC;color:#E0334F;box-shadow:0 0 0 8px rgba(224,51,79,.09)}
+    @media(prefers-color-scheme:dark){.dic.bad{background:#3A1520;color:#FF6B84}}
+    .dbox h3{font-size:19px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+    .dbox p{color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:20px;word-break:break-word}
+    .drow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn.dng{background:linear-gradient(135deg,#F0506E,#D6336C);box-shadow:0 12px 24px -12px #E0334F}
+    .toast{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:14px;padding:12px 18px;backdrop-filter:none;max-width:min(92vw,420px);text-align:left;box-shadow:0 18px 40px -16px rgba(0,0,0,.6);z-index:120}
     .btn.loading{position:relative;overflow:hidden;pointer-events:none;opacity:1}
     .btn.loading::before{display:none}
     .btn.loading::after{content:"";position:absolute;left:0;bottom:0;height:4px;width:100%;background:rgba(255,255,255,.92);transform-origin:left;animation:bgrow 7s cubic-bezier(.1,.7,.2,1) forwards}
@@ -875,6 +894,10 @@
   </div>
 </div>
 <!-- PIN CHANGED -->
+<div class="dlg hidden" id="dlg" role="alertdialog" aria-modal="true" aria-labelledby="dT" onclick="if(event.target===this)dlgDone(false)">
+  <div class="dbox"><div class="dic" id="dIc">?</div><h3 id="dT"></h3><p id="dM"></p>
+    <div class="drow"><button type="button" class="btn ghost" id="dNo" onclick="dlgDone(false)">Cancel</button><button type="button" class="btn" id="dYes" onclick="dlgDone(true)">OK</button></div></div>
+</div>
 <div class="modal center hidden" id="pinModal" onclick="if(event.target===this)closeModal()" role="dialog" aria-modal="true" aria-labelledby="pmT">
   <div class="sheetbox okbox">
     <div class="okring"><svg class="ic"><use href="#i-check"/></svg></div>
@@ -1227,8 +1250,8 @@
     if(n>=5){lsSet('uvl',Date.now()+60000);n=0;$('loginErr').textContent='Too many wrong tries. Locked for 1 minute.'}
     lsSet('uvf',n);
   }
-  function logoutBtn(){
-    if(Q.length&&!confirm(Q.length+' sale(s) are still waiting to sync. They stay saved and will sync after you log in again. Logout now?'))return;
+  async function logoutBtn(){
+    if(Q.length&&!(await ask(Q.length+' sale(s) are still waiting to sync. They stay saved and will sync after you log in again. Logout now?',{title:'Logout now?',ok:'Logout'})))return;
     lockApp(); refreshBio();
   }
   /* ===== Cut / Share / Report / Fingerprint / Smart helpers ===== */
@@ -1326,7 +1349,7 @@
   }
   async function sell(){
     const c0=$('cust').value.trim().toLowerCase(), q0=Number($('qty').value);
-    if(c0&&q0&&DB&&DB.sales.some(x=>x.status!=='Undone'&&String(x.customer).trim().toLowerCase()===c0&&Number(x.qty)===q0&&Date.now()-Number(x.date)<120000)&&!confirm('The same order ('+q0+' IDs) was just given to this customer. Give again?'))return;
+    if(c0&&q0&&DB&&DB.sales.some(x=>x.status!=='Undone'&&String(x.customer).trim().toLowerCase()===c0&&Number(x.qty)===q0&&Date.now()-Number(x.date)<120000)&&!(await ask('The same order ('+q0+' IDs) was just given to this customer. Give again?',{title:'Same order again?',ok:'Give again'})))return;
     $('sellErr').textContent=''; $('sellBtn').disabled=true; $('sellBtn').classList.add('loading'); $('sellBtn').innerHTML='<span class="bspin"></span><span>Getting your IDs…</span>';
     const customer=$('cust').value.trim();
     const r=await run({action:'sell',customer,qty:$('qty').value,rate:$('rate').value,mode:MODE,ty:SEL.ty,ge:SEL.ge},'sellErr');
@@ -1400,7 +1423,7 @@
   const copyRow=i=>copyText(lines(ROWS[i].uids));
   const saveRow=i=>saveTxt(lines(ROWS[i].uids),ROWS[i].customer+'_order'+ROWS[i].order);
   async function undo(o,fromModal){
-    if(!confirm('Undo order #'+o+'? Its IDs will go back to stock.'))return;
+    if(!(await ask('Undo order #'+o+'? Its IDs will go back to stock.',{title:'Undo order?',ok:'Undo order',danger:true})))return;
     const r=await run({action:'undo',order:o}); if(r){toast('Order #'+o+' undone'); renderStats(r.stats); if(fromModal)closeModal(); loadHistory(); if(!$('fRes').classList.contains('hidden')&&$('fUid').value.trim())findUid();}
   }
   async function loadCust(){
@@ -1436,7 +1459,7 @@
   function viewFound(){ if(FS)openOrder(saleRow(FS.sale),FS.uid); }
   async function replaceUid(){
     const uid=$('fUid').value.trim();
-    if(!confirm('Mark this ID as bad and give the customer a new one?'))return;
+    if(!(await ask('Mark this ID as bad and give the customer a new one?',{title:'Mark as bad?',ok:'Replace ID',danger:true})))return;
     const r=await run({action:'replace',uid}); if(!r)return;
     $('fRes').innerHTML='<b>Replaced</b><br>New ID for '+esc(r.customer)+' (Order #'+r.order+'):<div class="uids" id="newU" style="margin-top:8px">'+esc(fmt(r.newUid))+'</div><br><button class="btn sm" onclick="copyText($(\'newU\').textContent)">'+ic('copy')+'Copy</button>';
     renderStats(r.stats);
@@ -1537,7 +1560,7 @@
   async function runRet(){
     $('retErr').textContent=''; const ids=parseUidList($('retTxt').value);
     if(!ids.length){$('retErr').textContent='Paste at least one UID';return}
-    if(!confirm(RETM==='return'?'Return '+ids.length+' ID(s) to stock? They will be removed from the customers\' orders.':'Replace '+ids.length+' ID(s)? Each one is marked Bad and a new ID is given.'))return;
+    if(!(await ask(RETM==='return'?'Return '+ids.length+' ID(s) to stock? They will be removed from the customers\' orders.':'Replace '+ids.length+' ID(s)? Each one is marked Bad and a new ID is given.',{title:RETM==='return'?'Return IDs?':'Replace IDs?',ok:RETM==='return'?'Return':'Replace',danger:true})))return;
     $('retBtn').disabled=true;
     const r=await run({action:RETM==='return'?'returns':'replacemany',uids:ids},'retErr');
     $('retBtn').disabled=false; if(!r)return;
@@ -1565,6 +1588,17 @@
 
   /* ===== Modals ===== */
   function showModal(id){hideModals();$(id).classList.remove('hidden');document.body.style.overflow='hidden';try{history.pushState({m:id},'')}catch(e){}}
+  /* themed confirm dialog (replaces the plain browser confirm box) */
+  let _dr=null;
+  function ask(msg,o){o=o||{};return new Promise(res=>{
+    if(_dr)dlgDone(false);_dr=res;
+    $('dIc').textContent=o.danger?'!':'?';$('dIc').className='dic'+(o.danger?' bad':'');
+    $('dT').textContent=o.title||'Please confirm';$('dM').textContent=msg;
+    const y=$('dYes');y.textContent=o.ok||'Yes';y.className='btn'+(o.danger?' dng':'');$('dNo').textContent=o.no||'Cancel';
+    $('dlg').classList.remove('hidden');setTimeout(()=>y.focus(),60);
+  })}
+  function dlgDone(v){const r=_dr;_dr=null;$('dlg').classList.add('hidden');if(r)r(v)}
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&_dr){dlgDone(false);e.stopImmediatePropagation()}},true);
   function hideModals(){document.querySelectorAll('.modal').forEach(m=>m.classList.add('hidden'));document.body.style.overflow=''}
   function closeModal(){hideModals();try{if(history.state&&history.state.m)history.back()}catch(e){}}
   window.addEventListener('popstate',hideModals);
@@ -1643,16 +1677,16 @@
     try{localStorage.setItem('uvconns',JSON.stringify(l))}catch(e){cmsg('Phone storage is full',false);return}
     switchConn(id);
   }
-  function switchConn(id){
+  async function switchConn(id){
     if(id===activeConn().id){closeModal();return}
-    if(Q.length&&!confirm(Q.length+' change(s) have not synced to the current sheet yet. Switching will discard them. Continue?'))return;
+    if(Q.length&&!(await ask(Q.length+' change(s) have not synced to the current sheet yet. Switching will discard them. Continue?',{title:'Switch sheet?',ok:'Switch',danger:true})))return;
     try{CACHE_KEYS.forEach(k=>localStorage.removeItem(k)); localStorage.setItem('uvact',id)}catch(e){}
     try{if(history.state&&history.state.m)history.replaceState(null,'')}catch(e){}
     location.reload();
   }
-  function delConn(id){
+  async function delConn(id){
     const c=savedConns().find(x=>x.id===id); if(!c||id===activeConn().id)return;
-    if(!confirm('Remove "'+c.name+'" from this app? The Google Sheet and its data are not deleted.'))return;
+    if(!(await ask('Remove "'+c.name+'" from this app? The Google Sheet and its data are not deleted.',{title:'Remove sheet?',ok:'Remove',danger:true})))return;
     try{localStorage.setItem('uvconns',JSON.stringify(savedConns().filter(x=>x.id!==id)))}catch(e){}
     renderConn();
   }
@@ -1715,6 +1749,7 @@
 
   /* Back button (called from the Android app) */
   window.fbBack=function(){
+    if(_dr){dlgDone(false);return true}
     if(document.querySelector('.modal:not(.hidden)')){closeModal();return true}
     const a=g('app');
     if(a&&a.classList.contains('menu-open')){toggleMenu(false);return true}
