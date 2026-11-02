@@ -609,6 +609,36 @@
     .top{backdrop-filter:none;-webkit-backdrop-filter:none;background:color-mix(in srgb,var(--bg) 94%,transparent)}
     #updPanel{margin:0 0 14px}
     @media(prefers-reduced-motion:reduce){#loader .ring,.pbar i{animation-duration:3s}}
+
+    /* ===== Long name fix: never let text widen the page ===== */
+    html,body{max-width:100%;overflow-x:hidden}
+    body *{min-width:0}
+    .h-item .who,.cmeta,.mhead>div,.kv>div,.card,.field,.sub,#resTitle,.dbox p{min-width:0;max-width:100%}
+    .h-item .who b,.h-item .who span,.sub,#resTitle,#odTitle,#odSub,.kv b,.kv span,.mhead h3,.fhead,.pwrow,.empty{overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+    .h-item .who{min-width:0;flex:1 1 120px}
+    .cmeta b,.cmeta span{max-width:100%}
+    input,select,textarea{max-width:100%;min-width:0}
+
+    /* ===== Custom name suggestions (themed) ===== */
+    .ddwrap{position:relative}
+    .namedd{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;max-height:224px;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px;box-shadow:0 18px 40px -16px rgba(0,0,0,.45);scrollbar-width:thin;scrollbar-color:var(--brand) transparent}
+    .namedd.hidden{display:none}
+    .namedd::-webkit-scrollbar{width:8px}
+    .namedd::-webkit-scrollbar-track{background:transparent;margin:6px 0}
+    .namedd::-webkit-scrollbar-thumb{background:var(--brand-soft);border:2px solid transparent;background-clip:content-box;border-radius:99px;box-shadow:inset 0 0 0 20px color-mix(in srgb,var(--brand) 55%,transparent)}
+    .namedd::-webkit-scrollbar-thumb:hover{box-shadow:inset 0 0 0 20px var(--brand)}
+    .ddi{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;font-size:14px;padding:10px 12px;border-radius:9px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ddi:hover,.ddi:active,.ddi:focus{background:var(--brand-soft);color:var(--brand);outline:0}
+
+    /* ===== Settings overview ===== */
+    .setsum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .setsum>div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 14px;box-shadow:var(--sh);min-width:0}
+    .setsum span{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+    .setsum b{display:block;font-size:15.5px;font-weight:800;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .setsum b.ok{color:var(--ok)}.setsum b.warn{color:var(--warn)}
+    .setsec{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:10px 4px -8px}
+    .tgl input:disabled{cursor:not-allowed}
+    .tgl:has(input:disabled){opacity:.55}
   </style>
 </head>
 <body>
@@ -719,7 +749,7 @@
           <h3>Give IDs to customer</h3>
           <p class="sub">That many IDs are taken from stock and marked as Sold.</p>
           <div class="row3">
-            <div class="field"><label for="cust">Customer name</label><input id="cust" list="custNames" autocomplete="off" placeholder="e.g. Ali Khan" oninput="drawNames()"><datalist id="custNames"></datalist></div>
+            <div class="field"><label for="cust">Customer name</label><div class="ddwrap"><input id="cust" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="next" maxlength="60" placeholder="e.g. Ali Khan" oninput="drawNames()" onblur="hideNameDd()"><div class="namedd hidden" id="nameDd" role="listbox"></div></div></div>
             <div class="field"><label for="qty">Quantity</label><input id="qty" type="number" inputmode="numeric" min="1" placeholder="50" oninput="updTot()"></div>
             <div class="field"><label for="rate">Rate per ID</label><input id="rate" type="number" inputmode="decimal" min="0" placeholder="0" oninput="updTot()"></div>
           </div>
@@ -731,6 +761,14 @@
           </div>
           <div class="field"><label>Names type</label><div class="opts" id="selTyS" role="radiogroup" aria-label="Names type"></div></div>
           <div class="field"><label>Gender</label><div class="opts" id="selGeS" role="radiogroup" aria-label="Gender"></div></div>
+          <div class="row2">
+            <div class="field"><label>DP (profile photo)</label><div class="opts" id="selDpS" role="radiogroup" aria-label="DP"></div></div>
+            <div class="field"><label>Page</label><div class="opts" id="selPgS" role="radiogroup" aria-label="Page"></div></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>2FA</label><div class="opts" id="selFaS" role="radiogroup" aria-label="2FA"></div></div>
+            <div class="field"><label>Cookies</label><div class="opts" id="selFkS" role="radiogroup" aria-label="Cookies"></div></div>
+          </div>
           <div class="selinfo" id="selInfo"></div>
           <div class="chips">
             <button class="chip" data-q="10" onclick="setQty(10)">10</button><button class="chip" data-q="25" onclick="setQty(25)">25</button>
@@ -745,7 +783,7 @@
         </section>
         <div class="stack">
           <section class="card"><h3>Last 7 days</h3><p class="sub">IDs sold per day</p><div class="bars" id="chart"></div></section>
-          <section class="card"><h3>Stock by category</h3><p class="sub">Remaining IDs. Older untagged IDs are counted under Mix / Mix.</p><table class="cgrid" id="cgrid"></table></section>
+          <section class="card"><h3>Stock by category</h3><p class="sub">Remaining IDs. Older untagged IDs are counted under Mix / Mix.</p><table class="cgrid" id="cgrid"></table><div class="selinfo" id="flagInfo" style="margin:12px 0 0"></div></section>
           <section class="card"><h3>Stock level</h3><p class="sub" id="stTxt"></p><div class="meter" id="meter"><i></i></div></section>
         </div>
       </div>
@@ -783,15 +821,12 @@
           <div class="sg" id="pwSeg">
             <button type="button" class="on" data-v="none" onclick="setPw('none')">None</button>
             <button type="button" data-v="same" onclick="setPw('same')">Same for all</button>
-            <button type="button" data-v="line" onclick="setPw('line')">Different per ID</button>
+            <button type="button" data-v="line" onclick="setPw('line')">Full lines</button>
           </div></div>
         <div class="field hidden" id="pwSame"><input id="addPass" oninput="cnt()" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Password for every ID in this batch"></div>
-        <div class="hint hidden" id="pwLine"><svg class="ic"><use href="#i-check"/></svg>Write each line as <b>UID|password</b></div>
-        <div class="arow"><label>Position</label>
-          <div class="sg" id="posSeg">
-            <button type="button" class="on" data-v="end" onclick="setPos('end')">End &middot; Fresh</button>
-            <button type="button" data-v="front" onclick="setPos('front')">Front &middot; used first</button>
-          </div></div>
+        <div class="hint hidden" id="pwLine"><svg class="ic"><use href="#i-check"/></svg>Write each line as <b>UID|password|2FA key|cookies</b>. Everything after the UID is optional. To skip a field leave it empty, e.g. <b>UID||2FA</b>.</div>
+        <div class="field"><label>Extras (applies to every ID in this batch)</label><div class="opts" id="addFlagS"></div></div>
+        <div class="hint"><svg class="ic"><use href="#i-check"/></svg>New IDs always go to the bottom, in the order you paste them: first line = oldest (upper), last line = freshest (bottom).</div>
         <div class="lbrow"><label for="addTxt">UIDs</label>
           <div class="tools"><button type="button" class="mini" onclick="pasteIds()"><svg class="ic"><use href="#i-copy"/></svg>Paste</button><button type="button" class="mini" onclick="clearIds()"><svg class="ic"><use href="#i-x"/></svg>Clear</button></div></div>
         <textarea id="addTxt" placeholder="Paste one UID per line" oninput="cnt()"></textarea>
@@ -826,6 +861,38 @@
       </section>
 
       <div class="stack hidden" data-tab="sec" style="max-width:600px">
+        <div class="setsum" id="setSum">
+          <div><span>Google Sheet</span><b id="ssSheet">-</b></div>
+          <div><span>Script</span><b id="ssScript">-</b></div>
+          <div><span>Screenshots</span><b id="ssShot">-</b></div>
+          <div><span>Auto-lock</span><b id="ssLock">-</b></div>
+        </div>
+        <div class="setsec">Security</div>
+        <section class="card setcard" id="secCard">
+          <div class="sethead"><div class="seticon"><svg class="ic"><use href="#i-lock"/></svg></div>
+            <div><h3>Security</h3><p class="sub">Protect the IDs on this phone.</p></div></div>
+          <div class="setbody swlist">
+            <div class="swrow"><div><b>Allow screenshots</b><small id="shotSub"></small></div>
+              <label class="tgl"><input type="checkbox" id="shotChk" onchange="fbSetShots(this.checked)" aria-label="Allow screenshots"><i></i></label></div>
+            <div class="swrow"><div><b>Auto-lock</b><small>Ask for the PIN again after the app was in the background</small></div>
+              <div class="sg" id="alSeg"><button type="button" data-v="0" onclick="fbSetAutoLock(0)">Off</button><button type="button" data-v="1" onclick="fbSetAutoLock(1)">1m</button><button type="button" data-v="5" onclick="fbSetAutoLock(5)">5m</button><button type="button" data-v="15" onclick="fbSetAutoLock(15)">15m</button><button type="button" data-v="30" onclick="fbSetAutoLock(30)">30m</button></div></div>
+            <div class="swrow"><div><b>Lock now</b><small>Ask for the PIN right away</small></div>
+              <button type="button" class="btn sm ghost" onclick="lockApp()"><svg class="ic"><use href="#i-lock"/></svg>Lock</button></div>
+          </div>
+        </section>
+        <section class="card setcard">
+          <div class="sethead"><div class="seticon"><svg class="ic"><use href="#i-shield"/></svg></div>
+            <div><h3>Change PIN</h3><p class="sub">Works on every device that uses this sheet.</p></div></div>
+          <div class="setbody pinrow">
+            <div class="field"><label for="curP">Current PIN</label><div class="pw"><input id="curP" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter current PIN"><button type="button" class="eye" onclick="eye(this)" aria-label="Show or hide PIN"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+            <div class="field"><label for="newP">New PIN</label><div class="pw"><input id="newP" type="password" inputmode="numeric" autocomplete="off" placeholder="4 to 10 digits"><button type="button" class="eye" onclick="eye(this)" aria-label="Show or hide PIN"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+            <div class="field"><label for="cnfP">Confirm new PIN</label><div class="pw"><input id="cnfP" type="password" inputmode="numeric" autocomplete="off" placeholder="Type it again"><button type="button" class="eye" onclick="eye(this)" aria-label="Show or hide PIN"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+            <div class="hint"><svg class="ic"><use href="#i-check"/></svg>Use 4 to 10 digits. Avoid easy PINs like 1234.</div>
+            <button class="btn" id="pinBtn" onclick="changePin()"><svg class="ic"><use href="#i-shield"/></svg>Save new PIN</button>
+            <div class="err" id="pinErr"></div>
+          </div>
+        </section>
+        <div class="setsec">Google Sheet</div>
         <section class="card setcard">
           <div class="sethead"><div class="seticon"><svg class="ic"><use href="#i-check"/></svg></div>
             <div><h3>Check connection</h3><p class="sub">See which Google Sheet this app is talking to.</p></div></div>
@@ -842,53 +909,32 @@
             <button class="btn ghost" onclick="openConn()"><svg class="ic"><use href="#i-link"/></svg>Manage Google Sheets</button>
           </div>
         </section>
+        <div class="setsec">Data &amp; app</div>
         <section class="card setcard">
-          <div class="sethead"><div class="seticon"><svg class="ic"><use href="#i-shield"/></svg></div>
-            <div><h3>Change PIN</h3><p class="sub">Works on every device that uses this sheet.</p></div></div>
-          <div class="setbody pinrow">
-            <div class="field"><label for="curP">Current PIN</label><div class="pw"><input id="curP" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter current PIN"><button type="button" class="eye" onclick="eye(this)" aria-label="Show or hide PIN"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
-            <div class="field"><label for="newP">New PIN</label><div class="pw"><input id="newP" type="password" inputmode="numeric" autocomplete="off" placeholder="4 to 10 digits"><button type="button" class="eye" onclick="eye(this)" aria-label="Show or hide PIN"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
-            <div class="field"><label for="cnfP">Confirm new PIN</label><div class="pw"><input id="cnfP" type="password" inputmode="numeric" autocomplete="off" placeholder="Type it again"><button type="button" class="eye" onclick="eye(this)" aria-label="Show or hide PIN"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
-            <div class="hint"><svg class="ic"><use href="#i-check"/></svg>Use 4 to 10 digits. Avoid easy PINs like 1234.</div>
-            <button class="btn" id="pinBtn" onclick="changePin()"><svg class="ic"><use href="#i-shield"/></svg>Save new PIN</button>
-            <div class="err" id="pinErr"></div>
+          <div class="sethead"><div class="seticon sh"><svg class="ic"><use href="#i-down"/></svg></div>
+            <div><h3>Backup</h3><p class="sub">Save your Google Sheet links, saved names and settings to a file. Your IDs stay in the Google Sheet. The PIN is never saved in the file.</p></div></div>
+          <div class="setbody">
+            <div class="row2">
+              <button class="btn ghost" onclick="fbBackupExport()"><svg class="ic"><use href="#i-down"/></svg>Export</button>
+              <button class="btn ghost" onclick="document.getElementById('bkFile').click()"><svg class="ic"><use href="#i-refresh"/></svg>Restore</button>
+            </div>
+            <input type="file" id="bkFile" accept=".json,application/json" class="hidden" onchange="fbBackupImport(this)">
+            <div class="err" id="bkMsg"></div>
           </div>
         </section>
-      <section class="card setcard">
-        <div class="sethead"><div class="seticon"><svg class="ic"><use href="#i-lock"/></svg></div>
-          <div><h3>Security</h3><p class="sub">Protect the IDs on this phone.</p></div></div>
-        <div class="setbody swlist">
-          <div class="swrow"><div><b>Auto-lock</b><small>Ask for the PIN again after the app was in the background</small></div>
-            <div class="sg" id="alSeg"><button type="button" data-v="0" onclick="fbSetAutoLock(0)">Off</button><button type="button" data-v="1" onclick="fbSetAutoLock(1)">1m</button><button type="button" data-v="5" onclick="fbSetAutoLock(5)">5m</button><button type="button" data-v="15" onclick="fbSetAutoLock(15)">15m</button><button type="button" data-v="30" onclick="fbSetAutoLock(30)">30m</button></div></div>
-          <div class="swrow hidden" id="secRow"><div><b>Block screenshots</b><small>Hides IDs from screenshots and the recent apps screen</small></div>
-            <label class="tgl"><input type="checkbox" id="secChk" onchange="fbSetSecure(this.checked)" aria-label="Block screenshots"><i></i></label></div>
-        </div>
-      </section>
-      <section class="card setcard">
-        <div class="sethead"><div class="seticon sh"><svg class="ic"><use href="#i-down"/></svg></div>
-          <div><h3>Backup</h3><p class="sub">Save your Google Sheet links, saved names and settings to a file. Your IDs stay in the Google Sheet. The PIN is never saved in the file.</p></div></div>
-        <div class="setbody">
-          <div class="row2">
-            <button class="btn ghost" onclick="fbBackupExport()"><svg class="ic"><use href="#i-down"/></svg>Export</button>
-            <button class="btn ghost" onclick="document.getElementById('bkFile').click()"><svg class="ic"><use href="#i-refresh"/></svg>Restore</button>
+        <section class="card setcard hidden" id="updCard">
+          <div class="sethead"><div class="seticon"><svg class="ic"><use href="#i-refresh"/></svg></div>
+            <div><h3>App updates</h3><p class="sub">Version <b id="verNow">-</b>. The app checks GitHub by itself and downloads new versions in the background.</p></div></div>
+          <div class="setbody">
+            <div class="swlist" style="padding:0 0 12px"><div class="swrow"><div><b>Download in background</b><small>New versions download automatically, you only tap Install</small></div>
+              <label class="tgl"><input type="checkbox" id="adlChk" checked onchange="fbSetAutoDl(this.checked)" aria-label="Download updates in background"><i></i></label></div></div>
+            <div class="verwarn updbar hidden" id="updPanel"></div>
+            <div class="field"><label for="repoIn">GitHub repository (username/repo)</label>
+              <input id="repoIn" placeholder="username/FB-IDs-Vault" autocomplete="off" autocapitalize="off" spellcheck="false" onchange="fbSetRepo(this.value)"></div>
+            <button class="btn ghost" id="updBtn" onclick="fbCheckUpdate(true)"><svg class="ic"><use href="#i-refresh"/></svg>Check for updates</button>
+            <div class="sub" id="updMsg" style="margin-top:12px;line-height:1.6"></div>
           </div>
-          <input type="file" id="bkFile" accept=".json,application/json" class="hidden" onchange="fbBackupImport(this)">
-          <div class="err" id="bkMsg"></div>
-        </div>
-      </section>
-      <section class="card setcard hidden" id="updCard">
-        <div class="sethead"><div class="seticon"><svg class="ic"><use href="#i-refresh"/></svg></div>
-          <div><h3>App updates</h3><p class="sub">Version <b id="verNow">-</b>. The app checks GitHub by itself and downloads new versions in the background.</p></div></div>
-        <div class="setbody">
-          <div class="swlist" style="padding:0 0 12px"><div class="swrow"><div><b>Download in background</b><small>New versions download automatically, you only tap Install</small></div>
-            <label class="tgl"><input type="checkbox" id="adlChk" checked onchange="fbSetAutoDl(this.checked)" aria-label="Download updates in background"><i></i></label></div></div>
-          <div class="verwarn updbar hidden" id="updPanel"></div>
-          <div class="field"><label for="repoIn">GitHub repository (username/repo)</label>
-            <input id="repoIn" placeholder="username/FB-IDs-Vault" autocomplete="off" autocapitalize="off" spellcheck="false" onchange="fbSetRepo(this.value)"></div>
-          <button class="btn ghost" id="updBtn" onclick="fbCheckUpdate(true)"><svg class="ic"><use href="#i-refresh"/></svg>Check for updates</button>
-          <div class="sub" id="updMsg" style="margin-top:12px;line-height:1.6"></div>
-        </div>
-      </section>
+        </section>
       </div>
     </main>
   </div>
@@ -929,6 +975,8 @@
           <button class="btn sm" id="rcAll" onclick="copyUids()"><svg class="ic"><use href="#i-copy"/></svg>Copy all</button>
           <button class="btn sm ghost hidden" id="rcIds" onclick="copyIdsOnly(LASTIDS)"><svg class="ic"><use href="#i-copy"/></svg>Copy IDs</button>
           <button class="btn sm ghost hidden" id="rcPw" onclick="copyPassOnly(LASTIDS)"><svg class="ic"><use href="#i-lock"/></svg>Copy passwords</button>
+          <button class="btn sm ghost hidden" id="rcFa" onclick="copyField(LASTIDS,'a')"><svg class="ic"><use href="#i-shield"/></svg>Copy 2FA</button>
+          <button class="btn sm ghost hidden" id="rcCk" onclick="copyField(LASTIDS,'c')"><svg class="ic"><use href="#i-copy"/></svg>Copy cookies</button>
           <button class="btn sm ghost" onclick="cutUids()"><svg class="ic"><use href="#i-cut"/></svg>Cut</button>
           <button class="btn sm ghost" onclick="shareUids()"><svg class="ic"><use href="#i-share"/></svg>Share</button>
           <button class="btn sm ghost" onclick="downloadUids()"><svg class="ic"><use href="#i-down"/></svg>.txt</button>
@@ -954,6 +1002,8 @@
         <button class="btn sm" id="odAll" onclick="copyText(lines(OD.uids))"><svg class="ic"><use href="#i-copy"/></svg>Copy all</button>
         <button class="btn sm ghost hidden" id="odIds" onclick="copyIdsOnly(OD.uids)"><svg class="ic"><use href="#i-copy"/></svg>Copy IDs</button>
         <button class="btn sm ghost hidden" id="odPw" onclick="copyPassOnly(OD.uids)"><svg class="ic"><use href="#i-lock"/></svg>Copy passwords</button>
+        <button class="btn sm ghost hidden" id="odFa" onclick="copyField(OD.uids,'a')"><svg class="ic"><use href="#i-shield"/></svg>Copy 2FA</button>
+        <button class="btn sm ghost hidden" id="odCk" onclick="copyField(OD.uids,'c')"><svg class="ic"><use href="#i-copy"/></svg>Copy cookies</button>
         <button class="btn sm ghost" onclick="saveTxt(lines(OD.uids),OD.customer+'_order'+OD.order)"><svg class="ic"><use href="#i-down"/></svg>.txt</button>
         <button class="btn sm ghost" onclick="shareText(lines(OD.uids))"><svg class="ic"><use href="#i-share"/></svg>Share</button>
       </div></div>
@@ -982,7 +1032,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const APP_VER = 6; let SCRIPT_VER = 0;
+  const APP_VER = 7; let SCRIPT_VER = 0;
   let LASTIDS = [], LASTMISS = [], PIN = '', LAST = [], LASTNAME = '', MODE = 'normal', ROWS = [];
   const $ = id => document.getElementById(id);
   const ic = n => '<svg class="ic"><use href="#i-' + n + '"/></svg>';
@@ -996,7 +1046,7 @@
   function activeConn(){ const id=rawGet('uvact')||'default', l=allConns(); return l.find(c=>c.id===id)||l[0]; }
   const APP_URL = activeConn().url;
   const LOW = 50;
-  let PW_OLD = false, TAGS_OLD = false, CATS = {}, SEL = {ty:'',ge:''}, ADDC = {ty:'X',ge:'X'}, LASTERR = '', DB = null, SNAP = null, Q = [], RES = {}, ONLINE = false, SP = Promise.resolve(), LASTPULL = 0;
+  let PW_OLD = false, TAGS_OLD = false, CATS = {}, SEL = {ty:'',ge:'',dp:'',pg:'',fa:'',fk:''}, ADDC = {ty:'X',ge:'X'}, LASTERR = '', DB = null, SNAP = null, Q = [], RES = {}, ONLINE = false, SP = Promise.resolve(), LASTPULL = 0;
   const LS = {
     get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
     set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('Phone storage is full'); } }
@@ -1005,13 +1055,39 @@
   function nextN(){let n=1;try{n=Number(localStorage.getItem('uvn')||0)+1}catch(e){}try{localStorage.setItem('uvn',n)}catch(e){}return n}
   const TYPES=[['E','English'],['M','Muslim'],['H','Hindu'],['X','Mix']], GENS=[['M','Male'],['F','Female'],['X','Mix']];
   const catOf=u=>(DB&&DB.tags&&DB.tags[u])||'XX';
-  const fmt=u=>(DB&&DB.pw&&DB.pw[u])?u+'|'+DB.pw[u]:u;   // change '|' here if you want a different separator
+  /* 2FA key + cookies are not in the sheet snapshot (too big); they are loaded when an order is opened/copied and kept here */
+  const XC={};
+  const flOf=u=>(DB&&DB.fl&&DB.fl[u])||'';
+  const hasX=u=>/[AK]/.test(flOf(u));
+  const fmtLite=u=>(DB&&DB.pw&&DB.pw[u])?u+'|'+DB.pw[u]:u;
+  const fmt=u=>{const p=(DB&&DB.pw&&DB.pw[u])||'',x=XC[u];if(!p&&!x)return u;const arr=[u,p,x?x[0]:'',x?x[1]:''];while(arr.length>1&&!arr[arr.length-1])arr.pop();return arr.join('|')};   // UID|password|2FA|cookies
+  async function ensureX(uids){
+    const need=uids.filter(u=>hasX(u)&&!XC[u]);
+    for(let i=0;i<need.length;i+=400){
+      try{const r=await net({action:'getx',uids:need.slice(i,i+400)});if(r&&r.ok)Object.assign(XC,r.x||{});else{toast((r&&r.error)||'Could not load 2FA / cookies');return}}
+      catch(e){toast('Needs internet to load 2FA / cookies');return}
+    }
+  }
+  async function copyField(a,w){await ensureX(a);const i=w==='a'?0:1,out=a.map(u=>(XC[u]&&XC[u][i])||'').filter(Boolean);out.length?copyText(out.join('\n')):toast('Nothing to copy')}
+  const FK={dp:'D',pg:'P',fa:'A',fk:'K'}, FLN={dp:['DP','No DP'],pg:['Page','No page'],fa:['2FA','No 2FA'],fk:['Cookies','No cookies']};
+  const selActive=s=>!!(s.ty||s.ge||s.dp||s.pg||s.fa||s.fk);
+  const selMatch=(u,s)=>{if(!catMatch(u,s.ty,s.ge))return false;const f=flOf(u);for(const k in FK){const v=s[k],h=f.indexOf(FK[k])>=0;if((v==='y'&&!h)||(v==='n'&&h))return false}return true};
+  const availN=s=>DB.stock.reduce((n,u)=>n+(selMatch(u,s)?1:0),0);
+  function selFull(s){const p=[catName(s.ty,s.ge)];for(const k in FK)if(s[k])p.push(FLN[k][s[k]==='y'?0:1]);return p.join(', ')}
+  const ADDF={dp:false,pg:false};
+  function addFlags(){return (ADDF.dp?'D':'')+(ADDF.pg?'P':'')}
+  function togAddF(k){ADDF[k]=!ADDF[k];drawCats()}
+  function addFl(u,f){if(!f)return;let t=DB.fl[u]||'';for(const ch of f)if(t.indexOf(ch)<0)t+=ch;DB.fl[u]=t}
   const lines=a=>a.map(fmt).join('\n');
-  function parseEntries(text,hasPw){
+  function parseEntries(text,full){   // full lines: UID|password|2FA|cookies  (returns [[uid,pass,auth,cookie]])
     const m=new Map();
-    if(hasPw){String(text||'').split(/\r?\n/).forEach(l=>{l=l.trim();if(!l)return;const x=l.match(/^(\S+?)(?:[\s|,;:]+(.+))?$/);if(x&&!m.has(x[1]))m.set(x[1],(x[2]||'').trim())})}
-    else String(text||'').split(/[\s,;]+/).filter(Boolean).forEach(u=>{if(!m.has(u))m.set(u,'')});
-    return Array.from(m.entries());
+    String(text||'').split(/\r?\n/).forEach(l=>{l=l.trim();if(!l)return;
+      if(full){let u,p='',a='',c='';
+        if(/[|\t]/.test(l)){const x=l.split(/[|\t]/);u=x[0].trim();p=(x[1]||'').trim();a=(x[2]||'').trim();c=x.slice(3).join('|').trim()}
+        else{const x=l.match(/^(\S+?)(?:[\s,;:]+(.+))?$/);if(!x)return;u=x[1];p=(x[2]||'').trim()}
+        if(u&&!m.has(u))m.set(u,[u,p,a,c])}
+      else l.split(/[\s,;]+/).forEach(u=>{if(u&&!m.has(u))m.set(u,[u,'','',''])})});
+    return Array.from(m.values());
   }
   const catMatch=(u,ty,ge)=>{const c=catOf(u);return(!ty||c[0]===ty)&&(!ge||c[1]===ge)};
   const cc=(c,ty,ge)=>{let n=0;for(const k in c)if((!ty||k[0]===ty)&&(!ge||k[1]===ge))n+=c[k];return n};
@@ -1021,7 +1097,7 @@
     DB.sales.forEach(x=>{if(x.status!=='Undone')x.uids.forEach(u=>{DB.sold[u]=x})});
   }
   function applyOp(op){
-    if(op.t==='add'){if(op.pws)Object.assign(DB.pw,op.pws);const rc=op.cat&&op.cat!=='XX',nw=[];op.uids.forEach(u=>{if(DB.sold[u])return;if(!DB.set.has(u)){nw.push(u);DB.set.add(u)}if(rc)DB.tags[u]=op.cat});DB.stock=op.front?nw.concat(DB.stock):DB.stock.concat(nw)}
+    if(op.t==='add'){if(op.pws)Object.assign(DB.pw,op.pws);const rc=op.cat&&op.cat!=='XX',nw=[],bf=String(op.flags||'');op.uids.forEach(u=>{if(DB.sold[u])return;if(!DB.set.has(u)){nw.push(u);DB.set.add(u)}if(rc)DB.tags[u]=op.cat;const x=op.xs&&op.xs[u];addFl(u,bf+(x&&x[0]?'A':'')+(x&&x[1]?'K':''))});DB.stock=DB.stock.concat(nw)}   /* one order: always at the bottom */
     else if(op.t==='sell'){
       const take=new Set(op.uids); DB.stock=DB.stock.filter(u=>!take.has(u));
       DB.sales.push({order:'P'+op.n,date:op.date,customer:op.customer,qty:op.uids.length,rate:op.rate,amount:op.rate*op.uids.length,uids:op.uids.slice(),mode:op.mode,status:'Pending',opId:op.id});
@@ -1031,7 +1107,7 @@
   const setH=(id,h)=>{const e=$(id);if(e&&e.__h!==h){e.__h=h;e.innerHTML=h}};
   function rebuild(){
     const s=SNAP||{stock:[],sales:[],bad:[]};
-    DB={stock:s.stock.slice(),sales:s.sales.slice(),bad:s.bad||[],tags:Object.assign({},s.tags||{}),pw:Object.assign({},s.pw||{})}; index();
+    DB={stock:s.stock.slice(),sales:s.sales.slice(),bad:s.bad||[],tags:Object.assign({},s.tags||{}),pw:Object.assign({},s.pw||{}),fl:Object.assign({},s.fl||{})}; index();
     Q.forEach(applyOp);
   }
   const netMode=()=>(typeof google!=='undefined'&&google.script&&google.script.run)?'page':'link';
@@ -1054,7 +1130,7 @@
       const r=await net({action:'sync',ops:sent});
       if(r.same){LASTPULL=Date.now();ONLINE=true;return{}}   // nothing changed: skip parse, save and rebuild
       if(!r.ok){if(!$('app').classList.contains('hidden'))toast(r.error);return{err:r.error}}
-      r.res.forEach(x=>{RES[x.id]=x;if(!x.ok)toast(x.error)});
+      r.res.forEach(x=>{RES[x.id]=x;if(x.x)Object.assign(XC,x.x);if(!x.ok)toast(x.error)});
       Q=Q.slice(sent.length); LS.set('uvq',Q);
       TAGS_OLD=!!(r.snap&&r.snap.tags===undefined); PW_OLD=!!(r.snap&&r.snap.pw===undefined); SCRIPT_VER=(r.snap&&r.snap.ver)||0; SNAP=r.snap; LS.set('uvs',SNAP); LASTPULL=Date.now(); ONLINE=true; rebuild();
       return{};
@@ -1082,28 +1158,30 @@
     const customer=String(q.customer||'').trim(), qty=Number(q.qty), rate=Number(q.rate)||0, fresh=q.mode==='fresh';
     if(!customer)return{ok:false,error:'Enter customer name'};
     if(!qty||qty<1||qty%1)return{ok:false,error:'Enter a valid quantity'};
-    const ty=q.ty||'',ge=q.ge||'', pool=(ty||ge)?DB.stock.filter(u=>catMatch(u,ty,ge)):DB.stock;
-    if(pool.length<qty)return{ok:false,error:'Only '+pool.length+' IDs left'+((ty||ge)?' in this category':'')+', '+qty+' requested'};
+    const sl={ty:q.ty||'',ge:q.ge||'',dp:q.dp||'',pg:q.pg||'',fa:q.fa||'',fk:q.fk||''}, pool=selActive(sl)?DB.stock.filter(u=>selMatch(u,sl)):DB.stock;
+    if(pool.length<qty)return{ok:false,error:'Only '+pool.length+' IDs left'+(selActive(sl)?' in this selection':'')+', '+qty+' requested'};
     const uids=fresh?pool.slice(pool.length-qty):pool.slice(0,qty);
-    const op={id:newId(),t:'sell',customer,rate,mode:fresh?'Fresh':'Normal',date:Date.now(),uids,n:nextN(),ty,ge};
+    const op={id:newId(),t:'sell',customer,rate,mode:fresh?'Fresh':'Normal',date:Date.now(),uids,n:nextN(),ty:sl.ty,ge:sl.ge,dp:sl.dp,pg:sl.pg,fa:sl.fa,fk:sl.fk};
     Q.push(op); LS.set('uvq',Q); applyOp(op); return op;
   }
-  function localAdd(text,cat,hasPw,pass,front,allowBad){
-    const ent=parseEntries(text,hasPw).map(([u,p])=>[u,p||pass||'']);
+  function localAdd(text,cat,hasPw,pass,flags,allowBad){
+    const ent=parseEntries(text,hasPw).map(([u,p,a,c])=>[u,p||pass||'',a,c]);
     if(!ent.length)return{ok:false,error:'No UIDs found'};
-    const code=/^[EMHX][MFX]$/.test(cat)?cat:'XX', pws={}, fresh=[], moved=[], sk={stock:0,sold:0,bad:0};
+    const code=/^[EMHX][MFX]$/.test(cat)?cat:'XX', bf=String(flags||'').replace(/[^DP]/g,''), pws={}, xs={}, fresh=[], moved=[], sk={stock:0,sold:0,bad:0};
     const badSet=new Set((DB.bad||[]).map(x=>x[0]));
-    ent.forEach(([u,p])=>{
+    ent.forEach(([u,p,a,c])=>{
+      const f=bf+(a?'A':'')+(c?'K':'');
       if(DB.sold[u]){sk.sold++;return}
       if(DB.set.has(u)){
-        if((code!=='XX'&&catOf(u)!==code)||(p&&DB.pw[u]!==p)){moved.push(u);if(p)pws[u]=p}else sk.stock++;
+        const chg=f.split('').some(ch=>flOf(u).indexOf(ch)<0);
+        if((code!=='XX'&&catOf(u)!==code)||(p&&DB.pw[u]!==p)||chg||a||c){moved.push(u);if(p)pws[u]=p;if(a||c)xs[u]=[a,c]}else sk.stock++;
         return;
       }
       if(badSet.has(u)&&!allowBad){sk.bad++;return}
-      fresh.push(u);if(p)pws[u]=p;
+      fresh.push(u);if(p)pws[u]=p;if(a||c)xs[u]=[a,c];
     });
     const all=fresh.concat(moved);
-    if(all.length){const op={id:newId(),t:'add',uids:all,date:Date.now(),cat:code,pws,front:!!front,bad:!!allowBad};Q.push(op);LS.set('uvq',Q);applyOp(op)}
+    if(all.length){Object.assign(XC,xs);const op={id:newId(),t:'add',uids:all,date:Date.now(),cat:code,pws,xs,flags:bf,bad:!!allowBad};Q.push(op);LS.set('uvq',Q);applyOp(op)}
     return{ok:true,added:fresh.length,moved:moved.length,duplicates:sk.stock+sk.sold+sk.bad,skip:sk,uids:all};
   }
   async function call(req){
@@ -1130,7 +1208,7 @@
       if(r&&!r.ok)return{ok:false,error:r.error};
       return{ok:true,uids:(r&&r.uids)||op.uids,order:r?r.order:'pending',amount:op.rate*op.uids.length,stats:stats()};
     }
-    if(a==='add'){const r=localAdd(req.text,req.cat,req.hasPw,req.pass,req.front,req.bad); if(!r.ok)return r; await sync(); r.stats=stats(); return r}
+    if(a==='add'){const r=localAdd(req.text,req.cat,req.hasPw,req.pass,req.flags,req.bad); if(!r.ok)return r; await sync(); r.stats=stats(); return r}
     if(a==='history'){
       const from=req.from?new Date(req.from+'T00:00:00').getTime():0, to=req.to?new Date(req.to+'T23:59:59').getTime():Infinity, cu=String(req.customer||'').toLowerCase();
       return{ok:true,history:DB.sales.slice().reverse().filter(x=>x.date>=from&&x.date<=to&&(!cu||String(x.customer).toLowerCase().indexOf(cu)>=0)).slice(0,200)
@@ -1155,6 +1233,7 @@
       if(Q.length)return{ok:false,error:'Waiting to sync. Try again in a moment'};
       const r=await net(req);
       if(r.ok){
+        if(r.x)Object.assign(XC,r.x);
         if(a==='changepin'){PIN=req.newPin;try{localStorage.setItem('uvp',PIN)}catch(e){}}
         await sync(); r.stats=stats();
       }
@@ -1167,7 +1246,7 @@
   const esc = v => String(v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const money = n => Number(n || 0).toLocaleString();
   const PG = {sell:['Sell','Give IDs to a customer'], orders:['Orders','History, export and undo'], cust:['Customers','Your top buyers'],
-    find:['UID search','Find where any UID went'], add:['Add New Stock','Load fresh IDs'], sec:['Settings','Google Sheet and PIN'], ret:['Returns & Replace','Take IDs back or replace bad ones']};
+    find:['UID search','Find where any UID went'], add:['Add New Stock','Load fresh IDs'], sec:['Settings','Security, Google Sheet, backup and updates'], ret:['Returns & Replace','Take IDs back or replace bad ones']};
 
   function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
   function toggleMenu(f){const a=$('app');a.classList.toggle('menu-open',f===undefined?!a.classList.contains('menu-open'):f)}
@@ -1184,22 +1263,21 @@
     $('app').classList.add('hidden'); $('login').classList.remove('hidden');
     setTimeout(()=>p.focus(),50);
   }
-  function setQty(n){$('qty').value=n<0?cc(CATS,SEL.ty,SEL.ge):n; updTot()}
+  function setQty(n){$('qty').value=n<0?availN(SEL):n; updTot()}
   function updTot(){
     const q=Number($('qty').value),r=Number($('rate').value);$('tot').textContent=(q&&r)?'Total '+money(q*r):'';
-    const el=$('sumLine');if(!el)return;const av=cc(CATS,SEL.ty,SEL.ge);
+    const el=$('sumLine');if(!el)return;const av=availN(SEL);
     document.querySelectorAll('.chips .chip[data-q]').forEach(b=>b.classList.toggle('on',Number(b.dataset.q)===q));
     el.className='sumline'+(q>av?' bad':'');
-    el.textContent=q?(q>av?'Only '+money(av)+' available in this category':money(q)+' IDs \u00b7 '+catName(SEL.ty,SEL.ge).replace(', ',' \u00b7 ')+' \u00b7 '+(MODE==='fresh'?'Fresh':'Oldest first')):'';
+    el.textContent=q?(q>av?'Only '+money(av)+' available in this selection':money(q)+' IDs \u00b7 '+selFull(SEL).split(', ').join(' \u00b7 ')+' \u00b7 '+(MODE==='fresh'?'Fresh':'Oldest first')):'';
   }
   function setMode(m){MODE=m; document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m)); try{updTot()}catch(e){}}
   function eye(b){const i=b.previousElementSibling, show=i.type==='password'; i.type=show?'text':'password'; b.innerHTML=ic(show?'eyeoff':'eye')}
-  const ADDS={pos:'end',pw:'none'};
+  const ADDS={pw:'none'};
   const segSet=(id,v)=>document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
-  function setPos(v){ADDS.pos=v;segSet('posSeg',v);cnt()}
   function setPw(v){
     ADDS.pw=v;segSet('pwSeg',v);$('pwSame').classList.toggle('hidden',v!=='same');$('pwLine').classList.toggle('hidden',v!=='line');
-    $('addTxt').placeholder=v==='line'?'UID|password, one per line':'Paste one UID per line';
+    $('addTxt').placeholder=v==='line'?'UID|password|2FA key|cookies, one per line':'Paste one UID per line';
     if(v==='same')setTimeout(()=>$('addPass').focus(),30); cnt();
   }
   function clearIds(){$('addTxt').value='';cnt()}
@@ -1221,7 +1299,9 @@
       if(bd)c.push('<span class="ac warn">'+money(bd)+' marked Bad</span>');
       if(ADDS.pw==='line'){const wp=ent.filter(e=>e[1]),dp=new Set(wp.map(e=>e[1]));c.push('<span class="ac '+(wp.length===ent.length?'ok':'warn')+'">'+wp.length+' with password'+(dp.size>1?' ('+dp.size+' different)':'')+'</span>');if(wp.length<ent.length)c.push('<span class="ac warn">'+(ent.length-wp.length)+' without</span>')}
       else if(ADDS.pw==='same'&&$('addPass').value.trim())c.push('<span class="ac ok">same password on all</span>');
-      c.push('<span class="ac">'+(ADDS.pos==='front'?'to the front':'to the end')+'</span>');
+      if(ADDS.pw==='line'){const fa=ent.filter(e=>e[2]).length,fk=ent.filter(e=>e[3]).length;if(fa)c.push('<span class="ac ok">'+money(fa)+' with 2FA</span>');if(fk)c.push('<span class="ac ok">'+money(fk)+' with cookies</span>')}
+      if(ADDF.dp)c.push('<span class="ac ok">DP</span>');if(ADDF.pg)c.push('<span class="ac ok">Page created</span>');
+      c.push('<span class="ac">to the bottom, in pasted order</span>');
     }
     $('addChips').innerHTML=c.join('');
     $('addBtn').innerHTML=ic('add')+(nw?'Add '+money(nw)+' new ID'+(nw===1?'':'s'):(st?'Update existing IDs':'Add to stock'));
@@ -1262,7 +1342,7 @@
   }
   function cutUids(){copyText(LAST.join('\n'));$('uids').textContent='';LAST=[];LASTIDS=[];closeModal();$('lastBtn').classList.add('hidden');toast('Cut: copied and cleared from screen')}
   function shareUids(){shareText(LAST.join('\n'))}
-  const shareRow=i=>shareText(lines(ROWS[i].uids));
+  const shareRow=async i=>{await ensureX(ROWS[i].uids);shareText(lines(ROWS[i].uids))};
   function shareReport(){
     toggleMenu(false); const s=stats();
     shareText('FB IDs Vault report, '+fmtD(Date.now())+'\nSold today: '+money(s.today)+' IDs, earned '+money(s.earnToday)+'\nThis month: '+money(s.month)+' IDs, earned '+money(s.earnMonth)+'\nTotal sold: '+money(s.sold)+' IDs, earned '+money(s.earnAll)+'\nStock left: '+money(s.available)+' of '+money(s.total));
@@ -1313,26 +1393,41 @@
   }
   function drawNames(){
     const all=allNames(), q=($('cust').value||'').trim().toLowerCase();
-    setH('custNames',all.slice(0,300).map(n=>'<option value="'+esc(n)+'"></option>').join(''));
-    NAMES=all.filter(n=>!q||(n.toLowerCase().includes(q)&&n.toLowerCase()!==q)).slice(0,10);
-    try{fillRate()}catch(e){}
-    setH('nchips',NAMES.map((n,i)=>'<button type="button" class="nchip" onclick="pickName('+i+')">'+esc(n)+'</button>').join(''));
+    try{fillRate()}catch(x){}
+    setH('nchips','');
+    const dd=$('nameDd'); if(!dd)return;
+    /* show suggestions only after the first letter is typed (and only while the box is focused) */
+    if(!q||document.activeElement!==$('cust')){NAMES=[];dd.classList.add('hidden');return}
+    const starts=[],has=[];
+    all.forEach(n=>{const l=n.toLowerCase();if(l===q)return;if(l.startsWith(q))starts.push(n);else if(l.split(/\s+/).some(w=>w.startsWith(q)))has.push(n)});
+    NAMES=starts.concat(has).slice(0,30);
+    if(!NAMES.length){dd.classList.add('hidden');return}
+    dd.innerHTML=NAMES.map((n,i)=>'<button type="button" class="ddi" role="option" onmousedown="event.preventDefault()" ontouchstart="this.__t=Date.now()" onclick="pickName('+i+')">'+esc(n)+'</button>').join('');
+    dd.scrollTop=0; dd.classList.remove('hidden');
   }
-  function pickName(i){$('cust').value=NAMES[i]||'';drawNames();$('qty').focus()}
+  function hideNameDd(){const d=$('nameDd');if(d)setTimeout(()=>d.classList.add('hidden'),120)}
+  function pickName(i){$('cust').value=NAMES[i]||'';NAMES=[];$('nameDd').classList.add('hidden');try{fillRate()}catch(x){}$('qty').focus()}
   function drawCats(){
     const optsHtml=(arr,cur,fn,count)=>arr.map(x=>{const n=count?count(x[0]):null;return '<button type="button" class="opt'+(x[0]===cur?' on':'')+(n===0?' zero':n>0&&n<=10?' low':'')+'" role="radio" aria-checked="'+(x[0]===cur)+'" onclick="'+fn+'(\''+x[0]+'\')">'+x[1]+(n===null?'':'<small>'+money(n)+'</small>')+'</button>'}).join('');
     const put=(id,h)=>{const e=$(id);if(e&&e.innerHTML!==h)e.innerHTML=h};
-    put('selTyS',optsHtml([['','Any']].concat(TYPES),SEL.ty,'selTy',k=>cc(CATS,k,SEL.ge)));
-    put('selGeS',optsHtml([['','Any']].concat(GENS),SEL.ge,'selGe',k=>cc(CATS,SEL.ty,k)));
+    const YN=[['','Any'],['y','With'],['n','Without']];
+    put('selTyS',optsHtml([['','Any']].concat(TYPES),SEL.ty,'selTy',k=>availN(Object.assign({},SEL,{ty:k}))));
+    put('selGeS',optsHtml([['','Any']].concat(GENS),SEL.ge,'selGe',k=>availN(Object.assign({},SEL,{ge:k}))));
+    put('selDpS',optsHtml(YN,SEL.dp,'selDp',k=>availN(Object.assign({},SEL,{dp:k}))));
+    put('selPgS',optsHtml(YN,SEL.pg,'selPg',k=>availN(Object.assign({},SEL,{pg:k}))));
+    put('selFaS',optsHtml(YN,SEL.fa,'selFa',k=>availN(Object.assign({},SEL,{fa:k}))));
+    put('selFkS',optsHtml(YN,SEL.fk,'selFk',k=>availN(Object.assign({},SEL,{fk:k}))));
+    put('addFlagS',[['dp','Has DP'],['pg','Page created']].map(x=>'<button type="button" class="opt'+(ADDF[x[0]]?' on':'')+'" role="checkbox" aria-checked="'+!!ADDF[x[0]]+'" onclick="togAddF(\''+x[0]+'\')">'+x[1]+'</button>').join(''));
+    {const fc={D:0,P:0,A:0,K:0};DB.stock.forEach(u=>{const f=flOf(u);for(const k in fc)if(f.indexOf(k)>=0)fc[k]++});const fi=$('flagInfo');if(fi)fi.textContent='With DP: '+money(fc.D)+' \u00b7 Page created: '+money(fc.P)+' \u00b7 2FA: '+money(fc.A)+' \u00b7 Cookies: '+money(fc.K)}
     put('addTyS',optsHtml([TYPES[3]].concat(TYPES.slice(0,3)),ADDC.ty,'addTy'));
     put('addGeS',optsHtml([GENS[2]].concat(GENS.slice(0,2)),ADDC.ge,'addGe'));
-    $('addInfo').textContent=catName(ADDC.ty,ADDC.ge).replace(', ',' \u00b7 ');
+    $('addInfo').textContent=catName(ADDC.ty,ADDC.ge).replace(', ',' \u00b7 ')+(ADDF.dp?' \u00b7 DP':'')+(ADDF.pg?' \u00b7 Page':'');
     $('addWarn').classList.toggle('hidden',!TAGS_OLD); try{cnt()}catch(e){}
-    $('selInfo').textContent=money(cc(CATS,SEL.ty,SEL.ge))+' IDs available'+((SEL.ty||SEL.ge)?' in this category':''); try{updTot()}catch(e){}
+    $('selInfo').textContent=money(availN(SEL))+' IDs available'+(selActive(SEL)?' in this selection':''); try{updTot()}catch(e){}
     $('cgrid').innerHTML='<tr><th></th>'+GENS.map(g=>'<th>'+g[1]+'</th>').join('')+'<th>Total</th></tr>'+TYPES.map(t=>'<tr><td>'+t[1]+'</td>'+GENS.map(g=>{const n=CATS[t[0]+g[0]]||0;return'<td class="'+(n?'':'z')+'">'+n+'</td>'}).join('')+'<td><b>'+cc(CATS,t[0],'')+'</b></td></tr>').join('')
       +'<tr><td>All</td>'+GENS.map(g=>'<td><b>'+cc(CATS,'',g[0])+'</b></td>').join('')+'<td><b>'+cc(CATS,'','')+'</b></td></tr>';
   }
-  const selTy=k=>{SEL.ty=k;drawCats()}, selGe=k=>{SEL.ge=k;drawCats()}, addTy=k=>{ADDC.ty=k;drawCats()}, addGe=k=>{ADDC.ge=k;drawCats()};
+  const selTy=k=>{SEL.ty=k;drawCats()}, selGe=k=>{SEL.ge=k;drawCats()}, selDp=k=>{SEL.dp=k;drawCats()}, selPg=k=>{SEL.pg=k;drawCats()}, selFa=k=>{SEL.fa=k;drawCats()}, selFk=k=>{SEL.fk=k;drawCats()}, addTy=k=>{ADDC.ty=k;drawCats()}, addGe=k=>{ADDC.ge=k;drawCats()};
   function renderStats(s){
     $('verWarn').classList.toggle('hidden',!s.online||SCRIPT_VER>=APP_VER);
     $('verInfo').textContent='Found: '+(SCRIPT_VER?'script version '+SCRIPT_VER:'no version number')+', needed: '+APP_VER+'. Connected through: '+(netMode()==='page'?'this web page':'the link '+shortUrl(APP_URL))+'.';
@@ -1352,10 +1447,10 @@
     if(c0&&q0&&DB&&DB.sales.some(x=>x.status!=='Undone'&&String(x.customer).trim().toLowerCase()===c0&&Number(x.qty)===q0&&Date.now()-Number(x.date)<120000)&&!(await ask('The same order ('+q0+' IDs) was just given to this customer. Give again?',{title:'Same order again?',ok:'Give again'})))return;
     $('sellErr').textContent=''; $('sellBtn').disabled=true; $('sellBtn').classList.add('loading'); $('sellBtn').innerHTML='<span class="bspin"></span><span>Getting your IDs…</span>';
     const customer=$('cust').value.trim();
-    const r=await run({action:'sell',customer,qty:$('qty').value,rate:$('rate').value,mode:MODE,ty:SEL.ty,ge:SEL.ge},'sellErr');
+    const r=await run({action:'sell',customer,qty:$('qty').value,rate:$('rate').value,mode:MODE,ty:SEL.ty,ge:SEL.ge,dp:SEL.dp,pg:SEL.pg,fa:SEL.fa,fk:SEL.fk},'sellErr');
     if(r){
       LAST=r.uids.map(fmt); LASTNAME=customer; saveName(customer);
-      $('resTitle').textContent=r.uids.length+' IDs for '+customer+((SEL.ty||SEL.ge)?' ['+catName(SEL.ty,SEL.ge)+']':'')+(r.amount?' ('+money(r.amount)+')':'')+(typeof r.order==='number'?', Order #'+r.order:', waiting to sync');
+      $('resTitle').textContent=r.uids.length+' IDs for '+customer+(selActive(SEL)?' ['+selFull(SEL)+']':'')+(r.amount?' ('+money(r.amount)+')':'')+(typeof r.order==='number'?', Order #'+r.order:', waiting to sync');
       LASTIDS=r.uids.slice(); LASTMISS=r.uids.filter(u=>!(DB.pw&&DB.pw[u]));
       $('pwBar').classList.toggle('hidden',!LASTMISS.length); $('pwFix').value='';
       if(LASTMISS.length){
@@ -1374,17 +1469,19 @@
     $('addErr').textContent='';
     const ty=ADDC.ty||'X', ge=ADDC.ge||'X', code=ty+ge;   // category chosen with the option chips
     ADDC.ty=ty; ADDC.ge=ge;
-    const front=ADDS.pos==='front', pass=ADDS.pw==='same'?$('addPass').value.trim():'', hadPass=ADDS.pw==='line'||!!pass;
+    const flags=addFlags(), pass=ADDS.pw==='same'?$('addPass').value.trim():'', hadPass=ADDS.pw==='line'||!!pass;
     if(ADDS.pw==='same'&&!pass){$('addErr').textContent='Type the password, or choose None';return}
     $('addBtn').disabled=true;
-    const r=await run({action:'add',text:$('addTxt').value,cat:code,hasPw:ADDS.pw==='line',pass,front,bad:$('addBad').checked},'addErr');
+    const r=await run({action:'add',text:$('addTxt').value,cat:code,hasPw:ADDS.pw==='line',pass,flags,bad:$('addBad').checked},'addErr');
     if(r){
       $('addTxt').value=''; $('addPass').value=''; cnt(); renderStats(r.stats);
       const ids=r.uids||[], pending=Q.length>0, sk=r.skip||{stock:0,sold:0,bad:0};
       const miss=(!pending&&code!=='XX')?ids.filter(u=>catOf(u)!==code).length:0;
       const L=[];
       L.push('Category: <b>'+esc(catName(ty,ge))+'</b> (Batch in sheet: <b>'+(code==='XX'?'blank':code)+'</b>)');
-      L.push('New IDs added: <b>'+money(r.added)+'</b> at the <b>'+(front?'front':'end')+'</b> of the stock');
+      L.push('New IDs added: <b>'+money(r.added)+'</b> at the <b>bottom</b> of the stock (first pasted = upper, last pasted = freshest)');
+      if(flags)L.push('Marked: <b>'+(flags.indexOf('D')>=0?'DP':'')+(flags.length>1?' + ':'')+(flags.indexOf('P')>=0?'Page created':'')+'</b>');
+      {const n2=ids.filter(u=>flOf(u).indexOf('A')>=0).length,nk=ids.filter(u=>flOf(u).indexOf('K')>=0).length;if(n2)L.push('2FA saved on <b>'+money(n2)+'</b> IDs');if(nk)L.push('Cookies saved on <b>'+money(nk)+'</b> IDs')}
       if(r.moved)L.push('Category / password updated on IDs already in stock: <b>'+money(r.moved)+'</b>');
       if(sk.stock)L.push('Skipped, already in stock: <b>'+money(sk.stock)+'</b>');
       if(sk.sold)L.push('Skipped, already sold: <b>'+money(sk.sold)+'</b> (use the Returns tab to take them back)');
@@ -1420,8 +1517,8 @@
     if(!ROWS.length){box.innerHTML='<div class="empty">No orders found.</div>';return;}
     box.innerHTML=ROWS.map((h,i)=>'<div class="h-item'+(h.status==='Undone'?' undone':'')+'"><div class="who clk" onclick="openOrderRow('+i+')"><b>'+esc(h.customer)+' '+(h.mode==='Fresh'?'<span class="tag">Fresh</span>':'')+'</b><span>Order #'+h.order+', '+esc(h.date)+(h.amount?', '+money(h.amount):'')+(h.status==='Undone'?', undone':h.status==='Pending'?', waiting to sync':'')+'</span></div><span class="qty">'+h.qty+'</span><button class="btn sm" onclick="openOrderRow('+i+')">'+ic('eye')+'View</button><button class="btn sm ghost" onclick="copyRow('+i+')">'+ic('copy')+'Copy</button><button class="btn sm ghost" onclick="saveRow('+i+')">'+ic('down')+'.txt</button><button class="btn sm ghost" onclick="shareRow('+i+')">'+ic('share')+'Share</button>'+(h.status==='Undone'||h.status==='Pending'?'':'<button class="btn sm ghost" onclick="undo('+h.order+')">'+ic('undo')+'Undo</button>')+'</div>').join('');
   }
-  const copyRow=i=>copyText(lines(ROWS[i].uids));
-  const saveRow=i=>saveTxt(lines(ROWS[i].uids),ROWS[i].customer+'_order'+ROWS[i].order);
+  const copyRow=async i=>{await ensureX(ROWS[i].uids);copyText(lines(ROWS[i].uids))};
+  const saveRow=async i=>{await ensureX(ROWS[i].uids);saveTxt(lines(ROWS[i].uids),ROWS[i].customer+'_order'+ROWS[i].order)};
   async function undo(o,fromModal){
     if(!(await ask('Undo order #'+o+'? Its IDs will go back to stock.',{title:'Undo order?',ok:'Undo order',danger:true})))return;
     const r=await run({action:'undo',order:o}); if(r){toast('Order #'+o+' undone'); renderStats(r.stats); if(fromModal)closeModal(); loadHistory(); if(!$('fRes').classList.contains('hidden')&&$('fUid').value.trim())findUid();}
@@ -1467,7 +1564,7 @@
   function exportCsv(){
     if(!ROWS.length)return toast('Load orders first');
     const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
-    const lines=['Order,Date,Customer,Qty,Rate,Amount,Mode,Status,UIDs'].concat(ROWS.map(h=>[h.order,h.date,h.customer,h.qty,h.rate,h.amount,h.mode,h.status,h.uids.map(fmt).join(' ')].map(q).join(',')));
+    const lines=['Order,Date,Customer,Qty,Rate,Amount,Mode,Status,UIDs'].concat(ROWS.map(h=>[h.order,h.date,h.customer,h.qty,h.rate,h.amount,h.mode,h.status,h.uids.map(fmtLite).join(' ')].map(q).join(',')));
     saveFile('uid-vault-orders.csv','\ufeff'+lines.join('\n'),'text/csv');
   }
   const copied=t=>{const n=String(t).split('\n').filter(Boolean).length;return n>1?'Copied '+n+' lines':'Copied'};
@@ -1520,12 +1617,13 @@
   function drawResMeta(customer,r){
     const num=typeof r.order==='number';
     $('resMeta').innerHTML=kv('Customer',esc(customer))+kv('Order',num?'#'+r.order:'Waiting to sync')+kv('Quantity',money(r.uids.length)+' IDs')+kv('Total',r.amount?money(r.amount):'-')
-      +kv('Which IDs',MODE==='fresh'?'Fresh (newest)':'Normal (oldest first)')+kv('Category',(SEL.ty||SEL.ge)?esc(catName(SEL.ty,SEL.ge)):'Any');
+      +kv('Which IDs',MODE==='fresh'?'Fresh (newest)':'Normal (oldest first)')+kv('Category',selActive(SEL)?esc(selFull(SEL)):'Any');
   }
   function drawResPw(){
-    const any=LASTIDS.some(u=>pwOf(u));
+    const ex=LASTIDS.some(hasX), any=LASTIDS.some(u=>pwOf(u))||ex;
     ['rcIds','rcPw'].forEach(i=>$(i).classList.toggle('hidden',!any));
-    $('rcAll').innerHTML=ic('copy')+(any?'Copy IDs + passwords':'Copy all');
+    $('rcFa').classList.toggle('hidden',!LASTIDS.some(u=>flOf(u).indexOf('A')>=0)); $('rcCk').classList.toggle('hidden',!LASTIDS.some(u=>flOf(u).indexOf('K')>=0));
+    $('rcAll').innerHTML=ic('copy')+(any?'Copy all data':'Copy all');
     $('resPw').innerHTML=pwPanelHtml('res',LASTIDS);
   }
 
@@ -1609,14 +1707,15 @@
   let OD=null;
   function saleRow(x){return{order:x.order,date:typeof x.date==='number'?fmtD(x.date,1):x.date,customer:x.customer,qty:(x.uids||[]).length,rate:x.rate,amount:x.amount,uids:x.uids||[],mode:x.mode,status:x.status}}
   const openOrderRow=i=>openOrder(ROWS[i]);
-  function openOrder(o,hl){
+  async function openOrder(o,hl){
+    await ensureX(o.uids);
     OD=o; const undone=o.status==='Undone', pend=o.status==='Pending';
     $('odTitle').textContent=o.customer; $('odSub').textContent='Order #'+o.order;
     const t=$('odTag'); t.textContent=undone?'Undone':pend?'Waiting to sync':'Sold'; t.className='tag'+(undone||pend?'':' ok');
     $('odMeta').innerHTML=kv('Given on',esc(o.date))+kv('Quantity',money(o.qty)+' IDs')+kv('Rate per ID',money(o.rate))+kv('Total amount',money(o.amount))
       +kv('Type',o.mode==='Fresh'?'Fresh IDs':'Normal (oldest first)')+kv('Status',undone?'Undone, IDs back in stock':pend?'Waiting to sync':'Completed');
     $('odCount').textContent=money(o.uids.length)+' UIDs in this order';
-    {const any=o.uids.some(u=>pwOf(u)); ['odIds','odPw'].forEach(i=>$(i).classList.toggle('hidden',!any)); $('odAll').innerHTML=ic('copy')+(any?'Copy IDs + passwords':'Copy all'); $('odPwp').innerHTML=pwPanelHtml('od',o.uids)}
+    {const ex=o.uids.some(hasX), any=o.uids.some(u=>pwOf(u))||ex; ['odIds','odPw'].forEach(i=>$(i).classList.toggle('hidden',!any)); $('odFa').classList.toggle('hidden',!o.uids.some(u=>flOf(u).indexOf('A')>=0)); $('odCk').classList.toggle('hidden',!o.uids.some(u=>flOf(u).indexOf('K')>=0)); $('odAll').innerHTML=ic('copy')+(any?'Copy all data':'Copy all'); $('odPwp').innerHTML=pwPanelHtml('od',o.uids)}
     $('odUids').innerHTML=o.uids.map(u=>u===hl?'<mark id="odHit">'+esc(fmt(u))+'</mark>':esc(fmt(u))).join('\n');
     $('odUndo').classList.toggle('hidden',undone||pend);
     showModal('ordModal'); $('odUids').scrollTop=0;
@@ -1723,205 +1822,223 @@
 </script>
 
 <script>
-/* ===== FB IDs Vault additions: auto-lock, screenshot block, backup, pull to refresh, back button ===== */
-(function(){
-  const g=id=>document.getElementById(id);
-  const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
-  const lsPut=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const appOpen=()=>{const a=g('app');return !!a&&!a.classList.contains('hidden')};
+  /* ===== FB IDs Vault additions: auto-lock, screenshot block, backup, pull to refresh, back button ===== */
+  (function(){
+    const g=id=>document.getElementById(id);
+    const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+    const lsPut=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+    const appOpen=()=>{const a=g('app');return !!a&&!a.classList.contains('hidden')};
 
-  /* Auto-lock (minutes, 0 = off). Default 5. */
-  const alMin=()=>{const v=lsGet('uval');return v===null?5:Number(v)||0};
-  window.fbSetAutoLock=v=>{lsPut('uval',String(Number(v)||0));segSet('alSeg',String(Number(v)||0));toast(Number(v)?'Auto-lock: '+v+' min':'Auto-lock is off')};
-  let hiddenAt=0;
-  document.addEventListener('visibilitychange',()=>{
-    if(document.hidden){hiddenAt=Date.now();return}
-    const m=alMin();
-    if(hiddenAt&&m>0&&appOpen()&&Date.now()-hiddenAt>m*60000){hiddenAt=0;lockApp();return}
-    hiddenAt=0;
-  },true);
-  segSet('alSeg',String(alMin()));
+    /* Auto-lock (minutes, 0 = off). Default 5. */
+    const alMin=()=>{const v=lsGet('uval');return v===null?5:Number(v)||0};
+    window.fbSetAutoLock=v=>{lsPut('uval',String(Number(v)||0));segSet('alSeg',String(Number(v)||0));toast(Number(v)?'Auto-lock: '+v+' min':'Auto-lock is off');try{fbSettingsSummary()}catch(e){}};
+    let hiddenAt=0;
+    document.addEventListener('visibilitychange',()=>{
+      if(document.hidden){hiddenAt=Date.now();return}
+      const m=alMin();
+      if(hiddenAt&&m>0&&appOpen()&&Date.now()-hiddenAt>m*60000){hiddenAt=0;lockApp();return}
+      hiddenAt=0;
+    },true);
+    segSet('alSeg',String(alMin()));
 
-  /* Screenshot block (Android only) */
-  const hasAnd=()=>!!(window.Android&&Android.setSecure);
-  if(hasAnd()){const r=g('secRow'),c=g('secChk');if(r&&c){r.classList.remove('hidden');try{c.checked=!!Android.isSecure()}catch(e){}}}
-  window.fbSetSecure=on=>{try{Android.setSecure(!!on);toast(on?'Screenshots are blocked':'Screenshots are allowed')}catch(e){}};
+    /* Screenshots on/off (Android: FLAG_SECURE). The switch is always visible: ON = screenshots allowed. */
+    const hasAnd=()=>!!(window.Android&&Android.setSecure);
+    const isBlocked=()=>{try{return !!Android.isSecure()}catch(e){return true}};
+    function shotsUI(){
+      const c=g('shotChk'),sub=g('shotSub'); if(!c||!sub)return;
+      if(hasAnd()){const b=isBlocked();c.disabled=false;c.checked=!b;
+        sub.textContent=b?'Off: screenshots and screen recording show a black screen, and the recent-apps preview is hidden.':'On: you can take screenshots. IDs can show in the recent-apps preview.'}
+      else{c.checked=true;c.disabled=true;sub.textContent='Works only inside the Android app. In a browser the phone or PC decides.'}
+      fbSettingsSummary();
+    }
+    window.fbSetShots=allow=>{if(!hasAnd()){shotsUI();return}try{Android.setSecure(!allow);toast(allow?'Screenshots are allowed':'Screenshots are blocked')}catch(e){}shotsUI()};
+    window.fbSetSecure=on=>fbSetShots(!on);
+    function fbSettingsSummary(){
+      const set=(id,t,c)=>{const e=g(id);if(e){e.textContent=t;e.className=c||''}};
+      try{set('ssSheet',activeConn().name)}catch(e){}
+      try{set('ssScript',!ONLINE?'Offline':SCRIPT_VER>=APP_VER?'Version '+SCRIPT_VER+', OK':SCRIPT_VER?'Version '+SCRIPT_VER+', old':'Old, update it',!ONLINE?'':SCRIPT_VER>=APP_VER?'ok':'warn')}catch(e){}
+      set('ssShot',hasAnd()?(isBlocked()?'Blocked':'Allowed'):'Browser',hasAnd()?(isBlocked()?'ok':'warn'):'');
+      set('ssLock',alMin()?alMin()+' min':'Off',alMin()?'ok':'warn');
+    }
+    window.fbSettingsSummary=fbSettingsSummary;
+    const _showTab=window.showTab; window.showTab=function(t){_showTab(t);if(t==='sec'){shotsUI()}};
+    shotsUI();
 
-  /* Back button (called from the Android app) */
-  window.fbBack=function(){
-    if(_dr){dlgDone(false);return true}
-    if(document.querySelector('.modal:not(.hidden)')){closeModal();return true}
-    const a=g('app');
-    if(a&&a.classList.contains('menu-open')){toggleMenu(false);return true}
-    if(appOpen()){const on=document.querySelector('#nav button.on');if(on&&on.dataset.t!=='sell'){showTab('sell');return true}}
-    return false;
-  };
-
-  /* Backup / restore of links and settings (never the PIN) */
-  const KEYS=['uvconns','uvact','uvnames','uval','uvrepo'];
-  window.fbBackupExport=function(){
-    const data={};KEYS.forEach(k=>{const v=lsGet(k);if(v!==null)data[k]=v});
-    const o={app:'FBIDsVault',v:1,date:new Date().toISOString(),data};
-    const d=new Date(),p=n=>String(n).padStart(2,'0');
-    saveFile('FBIDsVault-backup-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.json',JSON.stringify(o,null,1),'application/json');
-  };
-  window.fbBackupImport=function(inp){
-    const m=g('bkMsg'),f=inp.files&&inp.files[0];m.textContent='';m.style.color='';
-    if(!f)return;
-    const r=new FileReader();
-    r.onload=()=>{
-      try{
-        const o=JSON.parse(String(r.result));
-        if(!o||o.app!=='FBIDsVault'||!o.data||typeof o.data!=='object')throw 0;
-        let n=0;KEYS.forEach(k=>{if(typeof o.data[k]==='string'){lsPut(k,o.data[k]);n++}});
-        m.style.color='var(--ok)';m.textContent='Backup restored. Reloading...';
-        setTimeout(()=>location.reload(),700);
-      }catch(e){m.textContent='This file is not an FB IDs Vault backup.'}
-      inp.value='';
+    /* Back button (called from the Android app) */
+    window.fbBack=function(){
+      if(_dr){dlgDone(false);return true}
+      if(document.querySelector('.modal:not(.hidden)')){closeModal();return true}
+      const a=g('app');
+      if(a&&a.classList.contains('menu-open')){toggleMenu(false);return true}
+      if(appOpen()){const on=document.querySelector('#nav button.on');if(on&&on.dataset.t!=='sell'){showTab('sell');return true}}
+      return false;
     };
-    r.onerror=()=>{m.textContent='Could not read the file.'};
-    r.readAsText(f);
-  };
 
-  /* Pull down to refresh (top of the page only) */
-  let y0=null,x0=0,t0=null;
-  document.addEventListener('touchstart',e=>{
-    if(!appOpen()||window.scrollY>0||document.querySelector('.modal:not(.hidden)')){y0=null;return}
-    const t=e.touches[0];y0=t.clientY;x0=t.clientX;t0=e.target;
-  },{passive:true});
-  document.addEventListener('touchend',e=>{
-    if(y0===null)return;const t=e.changedTouches[0],dy=t.clientY-y0,dx=Math.abs(t.clientX-x0);y0=null;
-    if(dy>120&&dx<60&&window.scrollY<=0&&!(t0&&t0.closest&&t0.closest('textarea,input,select,.uids,.nchips,.bars'))){try{refreshNow()}catch(er){}}
-  },{passive:true});
-})();
+    /* Backup / restore of links and settings (never the PIN) */
+    const KEYS=['uvconns','uvact','uvnames','uval','uvrepo'];
+    window.fbBackupExport=function(){
+      const data={};KEYS.forEach(k=>{const v=lsGet(k);if(v!==null)data[k]=v});
+      const o={app:'FBIDsVault',v:1,date:new Date().toISOString(),data};
+      const d=new Date(),p=n=>String(n).padStart(2,'0');
+      saveFile('FBIDsVault-backup-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.json',JSON.stringify(o,null,1),'application/json');
+    };
+    window.fbBackupImport=function(inp){
+      const m=g('bkMsg'),f=inp.files&&inp.files[0];m.textContent='';m.style.color='';
+      if(!f)return;
+      const r=new FileReader();
+      r.onload=()=>{
+        try{
+          const o=JSON.parse(String(r.result));
+          if(!o||o.app!=='FBIDsVault'||!o.data||typeof o.data!=='object')throw 0;
+          let n=0;KEYS.forEach(k=>{if(typeof o.data[k]==='string'){lsPut(k,o.data[k]);n++}});
+          m.style.color='var(--ok)';m.textContent='Backup restored. Reloading...';
+          setTimeout(()=>location.reload(),700);
+        }catch(e){m.textContent='This file is not an FB IDs Vault backup.'}
+        inp.value='';
+      };
+      r.onerror=()=>{m.textContent='Could not read the file.'};
+      r.readAsText(f);
+    };
+
+    /* Pull down to refresh (top of the page only) */
+    let y0=null,x0=0,t0=null;
+    document.addEventListener('touchstart',e=>{
+      if(!appOpen()||window.scrollY>0||document.querySelector('.modal:not(.hidden)')){y0=null;return}
+      const t=e.touches[0];y0=t.clientY;x0=t.clientX;t0=e.target;
+    },{passive:true});
+    document.addEventListener('touchend',e=>{
+      if(y0===null)return;const t=e.changedTouches[0],dy=t.clientY-y0,dx=Math.abs(t.clientX-x0);y0=null;
+      if(dy>120&&dx<60&&window.scrollY<=0&&!(t0&&t0.closest&&t0.closest('textarea,input,select,.uids,.nchips,.bars'))){try{refreshNow()}catch(er){}}
+    },{passive:true});
+  })();
 </script>
 
 <script>
-/* ===== FB IDs Vault: background loading + update check (GitHub Releases) ===== */
-(function(){
-  /* >>> Set this to your GitHub "username/repository" (the repository must be public) <<< */
-  const DEFAULT_REPO='YOUR_GITHUB_USERNAME/FB-IDs-Vault';
+  /* ===== FB IDs Vault: background loading + update check (GitHub Releases) ===== */
+  (function(){
+    /* >>> Set this to your GitHub "username/repository" (the repository must be public) <<< */
+    const DEFAULT_REPO='YOUR_GITHUB_USERNAME/FB-IDs-Vault';
 
-  const g=id=>document.getElementById(id);
-  const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
-  const lsPut=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const appOpen=()=>{const a=g('app');return !!a&&!a.classList.contains('hidden')};
-  const hasAnd=()=>!!(window.Android&&Android.appVersion);
+    const g=id=>document.getElementById(id);
+    const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+    const lsPut=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+    const appOpen=()=>{const a=g('app');return !!a&&!a.classList.contains('hidden')};
+    const hasAnd=()=>!!(window.Android&&Android.appVersion);
 
-  /* --- Load everything in the background so every tab opens instantly --- */
-  function warm(){setTimeout(()=>{try{loadHistory()}catch(e){}try{loadCust()}catch(e){}},600)}
-  let stopped=false;
-  setInterval(()=>{
-    if(stopped||!appOpen()||document.hidden||(typeof BUSY!=='undefined'&&BUSY>0))return;
-    sync().then(r=>{
-      if(r&&r.err){stopped=true;return}          // wrong PIN or script problem: stop quietly, the normal sync will report it
-      try{renderStats(stats())}catch(e){} warm();
-    }).catch(()=>{});
-  },90000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)stopped=false});
+    /* --- Load everything in the background so every tab opens instantly --- */
+    function warm(){setTimeout(()=>{try{loadHistory()}catch(e){}try{loadCust()}catch(e){}},600)}
+    let stopped=false;
+    setInterval(()=>{
+      if(stopped||!appOpen()||document.hidden||(typeof BUSY!=='undefined'&&BUSY>0))return;
+      sync().then(r=>{
+        if(r&&r.err){stopped=true;return}          // wrong PIN or script problem: stop quietly, the normal sync will report it
+        try{renderStats(stats())}catch(e){} warm();
+      }).catch(()=>{});
+    },90000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)stopped=false});
 
-  /* --- Update: check, background download, install --- */
-  const nums=v=>String(v||'').replace(/^[^0-9]*/,'').split('.').map(x=>parseInt(x,10)||0);
-  function newer(a,b){const x=nums(a),y=nums(b);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d>0}return false}
-  const getRepo=()=>(lsGet('uvrepo')||DEFAULT_REPO).trim();
-  const repoSet=()=>/^[\w.-]+\/[\w.-]+$/.test(getRepo())&&!/^YOUR_/.test(getRepo());
-  window.fbSetRepo=v=>{v=String(v||'').trim().replace(/^https?:\/\/github\.com\//i,'').replace(/\.git$/i,'').replace(/\/$/,'');lsPut('uvrepo',v);g('repoIn').value=v;lsPut('uvupd','0');toast(repoSet()?'Update source saved':'Use the form username/repo')};
-  const autoDl=()=>lsGet('uvadl')!=='0';
-  window.fbSetAutoDl=on=>{lsPut('uvadl',on?'1':'0');toast(on?'Updates will download in the background':'Auto-download is off')};
+    /* --- Update: check, background download, install --- */
+    const nums=v=>String(v||'').replace(/^[^0-9]*/,'').split('.').map(x=>parseInt(x,10)||0);
+    function newer(a,b){const x=nums(a),y=nums(b);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d>0}return false}
+    const getRepo=()=>(lsGet('uvrepo')||DEFAULT_REPO).trim();
+    const repoSet=()=>/^[\w.-]+\/[\w.-]+$/.test(getRepo())&&!/^YOUR_/.test(getRepo());
+    window.fbSetRepo=v=>{v=String(v||'').trim().replace(/^https?:\/\/github\.com\//i,'').replace(/\.git$/i,'').replace(/\/$/,'');lsPut('uvrepo',v);g('repoIn').value=v;lsPut('uvupd','0');toast(repoSet()?'Update source saved':'Use the form username/repo')};
+    const autoDl=()=>lsGet('uvadl')!=='0';
+    window.fbSetAutoDl=on=>{lsPut('uvadl',on?'1':'0');toast(on?'Updates will download in the background':'Auto-download is off')};
 
-  async function latest(){
-    const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);
-    try{
-      const r=await fetch('https://api.github.com/repos/'+getRepo()+'/releases/latest',{headers:{Accept:'application/vnd.github+json'},signal:c.signal});
-      if(r.status===404)return{none:true};
-      if(!r.ok)throw 0;
-      const j=await r.json();
-      const apk=(j.assets||[]).find(a=>/\.apk$/i.test(a.name));
-      return{ver:String(j.tag_name||''),url:apk?apk.browser_download_url:j.html_url,apk:!!apk,page:j.html_url};
-    }finally{clearTimeout(t)}
-  }
-  let UPD=null,UST='idle',UPCT=0;   // idle | available | downloading | ready | fail
-  function updHtml(later){
-    const v=UPD?esc(UPD.ver.replace(/^v/i,'')):'';
-    if(UST==='downloading')return '<div class="t"><b>Downloading update '+v+'</b><div class="pbar"><i style="width:'+UPCT+'%"></i></div></div><span class="pct">'+UPCT+'%</span>';
-    if(UST==='ready')return '<div class="t"><b>'+(v?'Update '+v:'An update')+' is ready.</b> Tap Install. Your data stays in the Google Sheet.</div><button class="btn" onclick="fbInstall()">Install now</button>';
-    if(UST==='fail')return '<div class="t"><b>Download failed.</b> Check your internet and try again.</div><button class="btn" onclick="fbDownload()">Retry</button>';
-    if(UST==='available')return '<div class="t"><b>New version '+v+' is available.</b></div><button class="btn" onclick="fbDownload()">'+(UPD&&UPD.apk?'Download':'Open')+'</button>'+(later?'<button class="x" onclick="fbLater()">Later</button>':'');
-    return '';
-  }
-  function paintUpd(){
-    const h=updHtml(true),m=document.querySelector('main');let d=g('updBar');
-    if(!h){if(d)d.remove()}else if(m){if(!d){d=document.createElement('div');d.id='updBar';d.className='verwarn updbar';m.insertBefore(d,m.firstChild)}d.innerHTML=h}
-    const p=g('updPanel');if(p){const k=updHtml(false);p.innerHTML=k;p.classList.toggle('hidden',!k)}
-  }
-  window.onUpdProgress=p=>{UST='downloading';UPCT=p;paintUpd()};
-  window.onUpdReady=()=>{UST='ready';paintUpd();toast('Update downloaded, ready to install')};
-  window.onUpdFail=()=>{UST='fail';paintUpd()};
-  window.fbDownload=()=>{
-    if(!UPD)return;
-    if(!UPD.apk){try{Android.openUrl(UPD.page||UPD.url)}catch(e){}return}
-    UST='downloading';UPCT=0;paintUpd();
-    try{Android.downloadUpdate(UPD.url)}catch(e){UST='fail';paintUpd()}
-  };
-  window.fbInstall=()=>{try{Android.installUpdate()}catch(e){}};
-  window.fbLater=()=>{if(UPD)lsPut('uvskip',UPD.ver);const d=g('updBar');if(d)d.remove()};
+    async function latest(){
+      const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);
+      try{
+        const r=await fetch('https://api.github.com/repos/'+getRepo()+'/releases/latest',{headers:{Accept:'application/vnd.github+json'},signal:c.signal});
+        if(r.status===404)return{none:true};
+        if(!r.ok)throw 0;
+        const j=await r.json();
+        const apk=(j.assets||[]).find(a=>/\.apk$/i.test(a.name));
+        return{ver:String(j.tag_name||''),url:apk?apk.browser_download_url:j.html_url,apk:!!apk,page:j.html_url};
+      }finally{clearTimeout(t)}
+    }
+    let UPD=null,UST='idle',UPCT=0;   // idle | available | downloading | ready | fail
+    function updHtml(later){
+      const v=UPD?esc(UPD.ver.replace(/^v/i,'')):'';
+      if(UST==='downloading')return '<div class="t"><b>Downloading update '+v+'</b><div class="pbar"><i style="width:'+UPCT+'%"></i></div></div><span class="pct">'+UPCT+'%</span>';
+      if(UST==='ready')return '<div class="t"><b>'+(v?'Update '+v:'An update')+' is ready.</b> Tap Install. Your data stays in the Google Sheet.</div><button class="btn" onclick="fbInstall()">Install now</button>';
+      if(UST==='fail')return '<div class="t"><b>Download failed.</b> Check your internet and try again.</div><button class="btn" onclick="fbDownload()">Retry</button>';
+      if(UST==='available')return '<div class="t"><b>New version '+v+' is available.</b></div><button class="btn" onclick="fbDownload()">'+(UPD&&UPD.apk?'Download':'Open')+'</button>'+(later?'<button class="x" onclick="fbLater()">Later</button>':'');
+      return '';
+    }
+    function paintUpd(){
+      const h=updHtml(true),m=document.querySelector('main');let d=g('updBar');
+      if(!h){if(d)d.remove()}else if(m){if(!d){d=document.createElement('div');d.id='updBar';d.className='verwarn updbar';m.insertBefore(d,m.firstChild)}d.innerHTML=h}
+      const p=g('updPanel');if(p){const k=updHtml(false);p.innerHTML=k;p.classList.toggle('hidden',!k)}
+    }
+    window.onUpdProgress=p=>{UST='downloading';UPCT=p;paintUpd()};
+    window.onUpdReady=()=>{UST='ready';paintUpd();toast('Update downloaded, ready to install')};
+    window.onUpdFail=()=>{UST='fail';paintUpd()};
+    window.fbDownload=()=>{
+      if(!UPD)return;
+      if(!UPD.apk){try{Android.openUrl(UPD.page||UPD.url)}catch(e){}return}
+      UST='downloading';UPCT=0;paintUpd();
+      try{Android.downloadUpdate(UPD.url)}catch(e){UST='fail';paintUpd()}
+    };
+    window.fbInstall=()=>{try{Android.installUpdate()}catch(e){}};
+    window.fbLater=()=>{if(UPD)lsPut('uvskip',UPD.ver);const d=g('updBar');if(d)d.remove()};
 
-  window.fbCheckUpdate=async function(manual){
-    if(!hasAnd())return;
-    const msg=g('updMsg'),btn=g('updBtn');let cur='';try{cur=Android.appVersion()}catch(e){}
-    if(UST==='downloading'){if(manual)toast('Update is downloading');return}
-    if(manual){msg.style.color='';msg.textContent='Checking...';btn.disabled=true}
-    try{
-      if(!repoSet()){if(manual)msg.textContent='Enter your GitHub repository above (username/repo) first.';return}
-      const u=await latest();
-      lsPut('uvupd',String(Date.now()));
-      if(u.none||!u.ver){if(manual)msg.textContent='No release published yet.';return}
-      if(newer(u.ver,cur)){
-        UPD=u;lsPut('uvupdver',u.ver);
-        let rdy=false;try{rdy=Android.updateReady()}catch(e){}
-        if(rdy)UST='ready';
-        else if(autoDl()&&u.apk){fbDownload();return}
-        else UST='available';
-        if(UST!=='available'||manual||lsGet('uvskip')!==u.ver)paintUpd();
-        if(manual){msg.style.color='var(--brand)';msg.textContent='Version '+u.ver.replace(/^v/i,'')+' is available.'}
-      }else{
-        if(UST!=='downloading'){UST='idle';paintUpd()}
-        if(manual){msg.style.color='var(--ok)';msg.textContent='You have the latest version ('+cur+').'}
-      }
-    }catch(e){if(manual){msg.style.color='';msg.textContent='Could not check. Check your internet.'}}
-    finally{if(manual)btn.disabled=false}
-  };
-  if(hasAnd()){
-    const c=g('updCard');if(c)c.classList.remove('hidden');
-    const nb=g('navUpd');if(nb)nb.classList.remove('hidden');
-    try{g('verNow').textContent=Android.appVersion()}catch(e){}
-    {const r=lsGet('uvrepo');if(r)g('repoIn').value=r}
-    const ac=g('adlChk');if(ac)ac.checked=autoDl();
-  }
-  /* background: check when the app opens, when it comes back to the front, and every 10 minutes (at most once per 30 minutes) */
-  function autoUpd(){
-    if(!hasAnd())return;
-    try{if(UST==='idle'&&Android.updateReady()){UST='ready';UPD=UPD||{ver:lsGet('uvupdver')||'',url:'',apk:true};paintUpd()}}catch(e){}
-    if(!repoSet()||Date.now()-Number(lsGet('uvupd')||0)<30*60*1000)return;
-    setTimeout(()=>fbCheckUpdate(false),3000);
-  }
-  setInterval(()=>{if(appOpen()&&!document.hidden)autoUpd()},10*60*1000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&appOpen())autoUpd()});
-  /* "Synced 12s ago" next to the status pill */
-  setInterval(()=>{
-    const e=g('syncAge');if(!e||!appOpen())return;
-    const s=LASTPULL?Math.round((Date.now()-LASTPULL)/1000):0;
-    e.textContent=!s?'':s<10?'Synced just now':s<60?'Synced '+s+'s ago':'Synced '+Math.round(s/60)+' min ago';
-  },5000);
+    window.fbCheckUpdate=async function(manual){
+      if(!hasAnd())return;
+      const msg=g('updMsg'),btn=g('updBtn');let cur='';try{cur=Android.appVersion()}catch(e){}
+      if(UST==='downloading'){if(manual)toast('Update is downloading');return}
+      if(manual){msg.style.color='';msg.textContent='Checking...';btn.disabled=true}
+      try{
+        if(!repoSet()){if(manual)msg.textContent='Enter your GitHub repository above (username/repo) first.';return}
+        const u=await latest();
+        lsPut('uvupd',String(Date.now()));
+        if(u.none||!u.ver){if(manual)msg.textContent='No release published yet.';return}
+        if(newer(u.ver,cur)){
+          UPD=u;lsPut('uvupdver',u.ver);
+          let rdy=false;try{rdy=Android.updateReady()}catch(e){}
+          if(rdy)UST='ready';
+          else if(autoDl()&&u.apk){fbDownload();return}
+          else UST='available';
+          if(UST!=='available'||manual||lsGet('uvskip')!==u.ver)paintUpd();
+          if(manual){msg.style.color='var(--brand)';msg.textContent='Version '+u.ver.replace(/^v/i,'')+' is available.'}
+        }else{
+          if(UST!=='downloading'){UST='idle';paintUpd()}
+          if(manual){msg.style.color='var(--ok)';msg.textContent='You have the latest version ('+cur+').'}
+        }
+      }catch(e){if(manual){msg.style.color='';msg.textContent='Could not check. Check your internet.'}}
+      finally{if(manual)btn.disabled=false}
+    };
+    if(hasAnd()){
+      const c=g('updCard');if(c)c.classList.remove('hidden');
+      const nb=g('navUpd');if(nb)nb.classList.remove('hidden');
+      try{g('verNow').textContent=Android.appVersion()}catch(e){}
+      {const r=lsGet('uvrepo');if(r)g('repoIn').value=r}
+      const ac=g('adlChk');if(ac)ac.checked=autoDl();
+    }
+    /* background: check when the app opens, when it comes back to the front, and every 10 minutes (at most once per 30 minutes) */
+    function autoUpd(){
+      if(!hasAnd())return;
+      try{if(UST==='idle'&&Android.updateReady()){UST='ready';UPD=UPD||{ver:lsGet('uvupdver')||'',url:'',apk:true};paintUpd()}}catch(e){}
+      if(!repoSet()||Date.now()-Number(lsGet('uvupd')||0)<30*60*1000)return;
+      setTimeout(()=>fbCheckUpdate(false),3000);
+    }
+    setInterval(()=>{if(appOpen()&&!document.hidden)autoUpd()},10*60*1000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&appOpen())autoUpd()});
+    /* "Synced 12s ago" next to the status pill */
+    setInterval(()=>{
+      const e=g('syncAge');if(!e||!appOpen())return;
+      const s=LASTPULL?Math.round((Date.now()-LASTPULL)/1000):0;
+      e.textContent=!s?'':s<10?'Synced just now':s<60?'Synced '+s+'s ago':'Synced '+Math.round(s/60)+' min ago';
+    },5000);
 
-  /* run when the app opens (after login / auto sign-in) */
-  /* remember the last Names type, Gender, mode and rate */
-  const _ut=window.updTot;
-  window.updTot=function(){const r=_ut.apply(this,arguments);lsPut('uvsell',JSON.stringify({ty:SEL.ty,ge:SEL.ge,m:MODE,r:$('rate').value}));return r};
-  function restoreSell(){try{const o=JSON.parse(lsGet('uvsell')||'{}');SEL.ty=o.ty||'';SEL.ge=o.ge||'';if(o.m)setMode(o.m);if(o.r&&!$('rate').value)$('rate').value=o.r;drawCats()}catch(e){}}
-  const _enter=window.enter;
-  if(typeof _enter==='function'){window.enter=function(){const r=_enter.apply(this,arguments);try{restoreSell()}catch(e){}try{warm();autoUpd()}catch(e){}return r}}
-})();
+    /* run when the app opens (after login / auto sign-in) */
+    /* remember the last Names type, Gender, mode and rate */
+    const _ut=window.updTot;
+    window.updTot=function(){const r=_ut.apply(this,arguments);lsPut('uvsell',JSON.stringify({ty:SEL.ty,ge:SEL.ge,m:MODE,r:$('rate').value}));return r};
+    function restoreSell(){try{const o=JSON.parse(lsGet('uvsell')||'{}');SEL.ty=o.ty||'';SEL.ge=o.ge||'';if(o.m)setMode(o.m);if(o.r&&!$('rate').value)$('rate').value=o.r;drawCats()}catch(e){}}
+    const _enter=window.enter;
+    if(typeof _enter==='function'){window.enter=function(){const r=_enter.apply(this,arguments);try{restoreSell()}catch(e){}try{warm();autoUpd()}catch(e){}return r}}
+  })();
 </script>
 </body>
 </html>
