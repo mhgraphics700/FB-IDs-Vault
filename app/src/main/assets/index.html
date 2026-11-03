@@ -702,6 +702,13 @@
     .cgh span{font-size:13px;color:var(--ink)}
     .cgh.dp{color:var(--ok)}
     .tag.dpt{background:var(--ok-soft);color:var(--ok)}
+
+    /* ===== Enhancements ===== */
+    .rep{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-4px 0 12px;padding:8px 12px;border-radius:12px;background:var(--brand-soft);color:var(--brand);font-size:12.5px;font-weight:600}
+    .rep b{font-weight:800}
+    .rep .mini{background:var(--surface);flex:none}
+    #ordQuick{margin:0 0 8px}
+    #ordSum{margin:0 0 12px}
   </style>
 </head>
 <body>
@@ -820,6 +827,7 @@
             <div class="field"><label for="qty">Quantity</label><input id="qty" type="number" inputmode="numeric" min="1" placeholder="50" oninput="updTot()"></div>
             <div class="field"><label for="rate">Rate per ID</label><input id="rate" type="number" inputmode="decimal" min="0" placeholder="0" oninput="updTot()"></div>
           </div>
+          <div class="rep hidden" id="repHint"></div>
           <div class="nchips" id="nchips"></div>
           <label>Which IDs?</label>
           <div class="seg" id="seg">
@@ -863,6 +871,8 @@
           <button class="btn sm" onclick="loadHistory()"><svg class="ic"><use href="#i-filter"/></svg>Filter</button>
           <button class="btn sm ghost" onclick="exportCsv()"><svg class="ic"><use href="#i-down"/></svg>CSV</button>
         </div>
+        <div class="chips" id="ordQuick"><button type="button" class="chip" onclick="ordRange(\'today\')">Today</button><button type="button" class="chip" onclick="ordRange(\'yday\')">Yesterday</button><button type="button" class="chip" onclick="ordRange(\'week\')">Last 7 days</button><button type="button" class="chip" onclick="ordRange(\'month\')">This month</button><button type="button" class="chip" onclick="ordRange(\'all\')">All</button></div>
+        <div class="selinfo" id="ordSum"></div>
         <div class="hist" id="hist"></div>
       </section>
 
@@ -943,6 +953,8 @@
               <label class="tgl"><input type="checkbox" id="shotChk" onchange="fbSetShots(this.checked)" aria-label="Allow screenshots"><i></i></label></div>
             <div class="swrow"><div><b>Auto-lock</b><small>Ask for the PIN again after the app was in the background</small></div>
               <div class="sg" id="alSeg"><button type="button" data-v="0" onclick="fbSetAutoLock(0)">Off</button><button type="button" data-v="1" onclick="fbSetAutoLock(1)">1m</button><button type="button" data-v="5" onclick="fbSetAutoLock(5)">5m</button><button type="button" data-v="15" onclick="fbSetAutoLock(15)">15m</button><button type="button" data-v="30" onclick="fbSetAutoLock(30)">30m</button></div></div>
+            <div class="swrow"><div><b>Low stock alert</b><small>Counter turns orange below this many IDs</small></div>
+              <div class="sg" id="lowSeg"><button type="button" data-v="10" onclick="fbSetLow(10)">10</button><button type="button" data-v="25" onclick="fbSetLow(25)">25</button><button type="button" data-v="50" onclick="fbSetLow(50)">50</button><button type="button" data-v="100" onclick="fbSetLow(100)">100</button><button type="button" data-v="200" onclick="fbSetLow(200)">200</button></div></div>
             <div class="swrow"><div><b>Lock now</b><small>Ask for the PIN right away</small></div>
               <button type="button" class="btn sm ghost" onclick="lockApp()"><svg class="ic"><use href="#i-lock"/></svg>Lock</button></div>
           </div>
@@ -1112,7 +1124,7 @@
   function allConns(){ return [{id:'default',name:'Main sheet',url:DEFAULT_URL,builtin:true}].concat(savedConns()); }
   function activeConn(){ const id=rawGet('uvact')||'default', l=allConns(); return l.find(c=>c.id===id)||l[0]; }
   const APP_URL = activeConn().url;
-  const LOW = 50;
+  let LOW = Number(rawGet('uvlow'))||50;
   let PW_OLD = false, TAGS_OLD = false, CATS = {}, SEL = {ty:'',ge:'',dp:'',pg:'',fa:'',fk:''}, ADDC = {ty:'X',ge:'X'}, LASTERR = '', DB = null, SNAP = null, Q = [], RES = {}, ONLINE = false, SP = Promise.resolve(), LASTPULL = 0;
   var _nm=null, SIG='', LASTFULL=0;   // names cache, server change-signature, time of last full download
   const LS = {
@@ -1390,6 +1402,9 @@
       if(ADDS.a)c.push(chip(nOf(2),'2FA'));
       if(ADDS.c)c.push(chip(nOf(3),'cookies'));
       c.push('<span class="ac '+(ADDF.dp?'ok':'')+'">'+(ADDF.dp?'With DP':'Without DP')+'</span>');if(ADDF.pg)c.push('<span class="ac ok">Page created</span>');
+      {const txt=$('addTxt').value,raw=addFields().length?txt.split(/\r?\n/).filter(l=>l.trim()).length:txt.split(/[\s,;]+/).filter(Boolean).length,dupl=raw-ent.length,odd=ent.filter(e=>!/^\d{6,25}$/.test(e[0])).length;
+        if(dupl>0)c.push('<span class="ac warn">'+money(dupl)+' repeated in the paste (ignored)</span>');
+        if(odd>0)c.push('<span class="ac warn">'+money(odd)+' UID'+(odd===1?'':'s')+' not plain numbers, check them</span>')}
       c.push('<span class="ac">to the bottom, in pasted order</span>');
     }
     $('addChips').innerHTML=c.join('');
@@ -1485,6 +1500,7 @@
   function drawNames(){
     const all=allNames(), q=($('cust').value||'').trim().toLowerCase();
     try{fillRate()}catch(x){}
+    try{repHint()}catch(x){}
     setH('nchips','');
     const dd=$('nameDd'); if(!dd)return;
     /* show suggestions only after the first letter is typed (and only while the box is focused) */
@@ -1496,8 +1512,19 @@
     dd.innerHTML=NAMES.map((n,i)=>'<button type="button" class="ddi" role="option" onmousedown="event.preventDefault()" ontouchstart="this.__t=Date.now()" onclick="pickName('+i+')">'+esc(n)+'</button>').join('');
     dd.scrollTop=0; dd.classList.remove('hidden');
   }
+  function ago(t){const d=Math.floor((Date.now()-Number(t))/864e5);return d<=0?'today':d===1?'yesterday':d+' days ago'}
+  function repHint(){
+    const el=$('repHint');if(!el||!DB)return;
+    const n=($('cust').value||'').trim().toLowerCase();let best=null;
+    if(n)DB.sales.forEach(x=>{if(x.status!=='Undone'&&String(x.customer).trim().toLowerCase()===n&&(!best||Number(x.date)>Number(best.date)))best=x});
+    if(!best){el.classList.add('hidden');return}
+    el.classList.remove('hidden');
+    el.innerHTML='<span>Last order: <b>'+money(best.qty)+' IDs</b>'+(Number(best.rate)?' at <b>'+money(best.rate)+'</b>':'')+', '+ago(best.date)+'</span><button type="button" class="mini" onclick="repeatLast()">Same again</button>';
+    el.__q=best.qty;el.__r=best.rate;
+  }
+  function repeatLast(){const el=$('repHint');if(!el||el.__q==null)return;$('qty').value=el.__q;if(Number(el.__r)){$('rate').value=el.__r;AUTO=String(el.__r)}updTot();try{drawCats()}catch(e){}$('qty').focus()}
   function hideNameDd(){const d=$('nameDd');if(d)setTimeout(()=>d.classList.add('hidden'),120)}
-  function pickName(i){$('cust').value=NAMES[i]||'';NAMES=[];$('nameDd').classList.add('hidden');try{fillRate()}catch(x){}$('qty').focus()}
+  function pickName(i){$('cust').value=NAMES[i]||'';NAMES=[];$('nameDd').classList.add('hidden');try{fillRate()}catch(x){}try{repHint()}catch(x){}$('qty').focus()}
   function drawCats(){
     const optsHtml=(arr,cur,fn,count)=>arr.map(x=>{const n=count?count(x[0]):null;return '<button type="button" class="opt'+(x[0]===cur?' on':'')+(n===0?' zero':n>0&&n<=10?' low':'')+'" role="radio" aria-checked="'+(x[0]===cur)+'" onclick="'+fn+'(\''+x[0]+'\')">'+x[1]+(n===null?'':'<small>'+money(n)+'</small>')+'</button>'}).join('');
     const put=(id,h)=>{const e=$(id);if(e&&e.innerHTML!==h)e.innerHTML=h};
@@ -1617,10 +1644,17 @@
     $('hist').innerHTML='<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
     const r=await run({action:'history',from:$('fFrom').value,to:$('fTo').value,customer:$('fCust').value}); if(!r)return;
     ROWS=r.history; const box=$('hist');
+    {const ok=ROWS.filter(h=>h.status!=='Undone');let q=0,a=0;ok.forEach(h=>{q+=Number(h.qty)||0;a+=Number(h.amount)||0});$('ordSum').textContent=ok.length?money(ok.length)+' orders, '+money(q)+' IDs'+(a?', earned '+money(a):''):''}
     if(!ROWS.length){box.innerHTML='<div class="empty">No orders found.</div>';return;}
     box.innerHTML=ROWS.map((h,i)=>'<div class="h-item'+(h.status==='Undone'?' undone':'')+'"><div class="who clk" onclick="openOrderRow('+i+')"><b>'+esc(h.customer)+' '+(h.mode==='Fresh'?'<span class="tag">Fresh</span>':'')+dpTag(h.uids)+'</b><span>Order #'+h.order+', '+esc(h.date)+(h.amount?', '+money(h.amount):'')+(h.status==='Undone'?', undone':h.status==='Pending'?', waiting to sync':'')+'</span></div><span class="qty">'+h.qty+'</span><button class="btn sm" onclick="openOrderRow('+i+')">'+ic('eye')+'View</button><button class="btn sm ghost" onclick="copyRow('+i+')">'+ic('copy')+'Copy</button><button class="btn sm ghost" onclick="saveRow('+i+')">'+ic('down')+'.txt</button><button class="btn sm ghost" onclick="shareRow('+i+')">'+ic('share')+'Share</button>'+(h.status==='Undone'||h.status==='Pending'?'':'<button class="btn sm ghost" onclick="undo('+h.order+')">'+ic('undo')+'Undo</button>')+'</div>').join('');
   }
   function dpTag(u){const n=u.filter(x=>flOf(x).indexOf('D')>=0).length;return n?'<span class="tag dpt">'+(n===u.length?'DP':'DP '+n+'/'+u.length)+'</span>':''}
+  function ordRange(k){
+    const d2=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'), t=new Date(), y=new Date(t);y.setDate(y.getDate()-1);
+    let f='',to='';
+    if(k==='today'){f=to=d2(t)}else if(k==='yday'){f=to=d2(y)}else if(k==='week'){const w=new Date(t);w.setDate(w.getDate()-6);f=d2(w);to=d2(t)}else if(k==='month'){f=d2(new Date(t.getFullYear(),t.getMonth(),1));to=d2(t)}
+    $('fFrom').value=f;$('fTo').value=to;$('fCust').value=k==='all'?'':$('fCust').value;loadHistory();
+  }
   const copyRow=async i=>{await ensureX(ROWS[i].uids);copyText(lines(ROWS[i].uids))};
   const saveRow=async i=>{await ensureX(ROWS[i].uids);saveTxt(lines(ROWS[i].uids),ROWS[i].customer+'_order'+ROWS[i].order)};
   async function undo(o,fromModal){
@@ -1935,6 +1969,7 @@
 
     /* Auto-lock (minutes, 0 = off). Default 5. */
     const alMin=()=>{const v=lsGet('uval');return v===null?5:Number(v)||0};
+    window.fbSetLow=v=>{LOW=Number(v)||50;lsPut('uvlow',String(LOW));segSet('lowSeg',String(LOW));try{renderStats(stats())}catch(e){}toast('Low stock alert: below '+LOW+' IDs')};
     window.fbSetAutoLock=v=>{lsPut('uval',String(Number(v)||0));segSet('alSeg',String(Number(v)||0));toast(Number(v)?'Auto-lock: '+v+' min':'Auto-lock is off');try{fbSettingsSummary()}catch(e){}};
     let hiddenAt=0;
     document.addEventListener('visibilitychange',()=>{
@@ -1953,6 +1988,7 @@
       if(hasAnd()){const b=isBlocked();c.disabled=false;c.checked=!b;
         sub.textContent=b?'Off: screenshots and screen recording show a black screen, and the recent-apps preview is hidden.':'On: you can take screenshots. IDs can show in the recent-apps preview.'}
       else{c.checked=true;c.disabled=true;sub.textContent='Works only inside the Android app. In a browser the phone or PC decides.'}
+      try{segSet('lowSeg',String(LOW))}catch(e){}
       fbSettingsSummary();
     }
     window.fbSetShots=allow=>{if(!hasAnd()){shotsUI();return}try{Android.setSecure(!allow);toast(allow?'Screenshots are allowed':'Screenshots are blocked')}catch(e){}shotsUI()};
