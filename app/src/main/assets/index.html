@@ -8,6 +8,9 @@
   <meta charset="utf-8">
   <title>FB IDs Vault</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{--bg:#F1F4F9;--surface:#fff;--ink:#0F172A;--muted:#64748B;--line:#E2E8F0;--brand:#2447F5;--brand-d:#1A35C4;--brand-soft:#E8EDFF;--ok:#0E9F6E;--ok-soft:#DDF5EC;--warn:#C2410C;--warn-soft:#FFE9DC;--bad:#D92D4A;--side:#0B1222;--r:16px;--r-sm:10px}
@@ -991,7 +994,7 @@
         <div class="setsec">Data &amp; app</div>
         <section class="card setcard">
           <div class="sethead"><div class="seticon sh"><svg class="ic"><use href="#i-down"/></svg></div>
-            <div><h3>Backup</h3><p class="sub">Save your Google Sheet links, saved names and settings to a file. Your IDs stay in the Google Sheet. The PIN is never saved in the file.</p></div></div>
+            <div><h3>Backup</h3><p class="sub">Export an encrypted backup of cached stock, sales, pending changes, sheet links and settings. The PIN and 2FA/cookies are not included. Choose a strong backup password.</p></div></div>
           <div class="setbody">
             <div class="row2">
               <button class="btn ghost" onclick="fbBackupExport()"><svg class="ic"><use href="#i-down"/></svg>Export</button>
@@ -1103,7 +1106,7 @@
     <div class="field"><label for="cUrl">Web app link (ends with /exec)</label><input id="cUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url"></div>
     <div class="cmsg" id="connMsg"></div>
     <div class="facts"><button class="btn sm ghost" id="cTest" onclick="testConn()">Test link</button><button class="btn sm" id="cAdd" onclick="addConn()"><svg class="ic"><use href="#i-link"/></svg>Save &amp; connect</button></div>
-    <p class="sub" style="margin:16px 0 0">Setup: open your Google Sheet, then Extensions, Apps Script. Paste the FB IDs Vault script (Code.gs), then Deploy, New deployment, Web app, Execute as Me, Who has access Anyone. Copy the link that ends with /exec and paste it above. First PIN is 1234.</p>
+    <p class="sub" style="margin:16px 0 0">Setup: open your Google Sheet, then Extensions, Apps Script. Paste the FB IDs Vault script (Code.gs), then Deploy, New deployment, Web app, Execute as Me, Who has access Anyone. Copy the link that ends with /exec and paste it above. Default PIN is 006464 (unless it was previously changed). Change it after your first login.</p>
   </div>
 </div>
 
@@ -1111,7 +1114,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const APP_VER = 8; let SCRIPT_VER = 0;
+  const APP_VER = 9; let SCRIPT_VER = 0;
   let LASTIDS = [], LASTMISS = [], PIN = '', LAST = [], LASTNAME = '', MODE = 'normal', ROWS = [];
   const $ = id => document.getElementById(id);
   const ic = n => '<svg class="ic"><use href="#i-' + n + '"/></svg>';
@@ -1129,8 +1132,70 @@
   var _nm=null, SIG='', LASTFULL=0;   // names cache, server change-signature, time of last full download
   const LS = {
     get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
-    set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('Phone storage is full'); } }
+    set: (k, v) => {
+      try { localStorage.setItem(k, JSON.stringify(v)); }
+      catch (e) { toast('Browser storage is full; checking offline backup'); }
+      if (k === 'uvs' || k.indexOf('uvs_') === 0 || k === 'uvq' || k.indexOf('uvq_') === 0) idbWrite(k, v);
+    }
   };
+
+  /* Durable offline mirror. localStorage keeps the existing synchronous app logic;
+     IndexedDB is a second copy for larger stock snapshots and queued changes. */
+  const OFFLINE_DB = 'fbids-vault-offline-v2';
+  let _idbPromise = null;
+  function openOfflineDB() {
+    if (!('indexedDB' in window)) return Promise.resolve(null);
+    if (!_idbPromise) _idbPromise = new Promise(resolve => {
+      try {
+        const req = indexedDB.open(OFFLINE_DB, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains('cache')) db.createObjectStore('cache');
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+        req.onblocked = () => resolve(null);
+      } catch (e) { resolve(null); }
+    });
+    return _idbPromise;
+  }
+  async function idbWrite(key, value) {
+    const db = await openOfflineDB(); if (!db) return;
+    try {
+      await new Promise(resolve => {
+        const tx = db.transaction('cache', 'readwrite');
+        tx.objectStore('cache').put(value, key);
+        tx.oncomplete = tx.onerror = tx.onabort = () => resolve();
+      });
+    } catch (e) {}
+  }
+  async function idbRead(key) {
+    const db = await openOfflineDB(); if (!db) return null;
+    try {
+      return await new Promise(resolve => {
+        const req = db.transaction('cache', 'readonly').objectStore('cache').get(key);
+        req.onsuccess = () => resolve(req.result === undefined ? null : req.result);
+        req.onerror = () => resolve(null);
+      });
+    } catch (e) { return null; }
+  }
+  async function restoreOfflineCache() {
+    const sKey='uvs_'+activeConn().id, localSnap=LS.get(sKey)||LS.get('uvs'), qKey='uvq_'+activeConn().id;
+    let localQueue = LS.get(qKey);
+    if (!Array.isArray(localQueue)) localQueue = LS.get('uvq');
+    if (!localSnap) {
+      let saved = await idbRead(sKey);
+      if (!saved) saved = await idbRead('uvs');
+      if (saved) { SNAP = saved; LS.set(sKey, saved); LS.set('uvs', saved); }
+    }
+    if (!Array.isArray(localQueue)) {
+      let saved = await idbRead(qKey);
+      if (!Array.isArray(saved)) saved = await idbRead('uvq');
+      if (Array.isArray(saved)) { Q = saved; LS.set(qKey, saved); LS.set('uvq', saved); }
+    }
+  }
+  // Keep unsynced operations attached to their own Google Sheet connection.
+  function saveQueue(){ LS.set('uvq', Q); LS.set('uvq_'+activeConn().id, Q); }
   const newId = () => 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   function nextN(){let n=1;try{n=Number(localStorage.getItem('uvn')||0)+1}catch(e){}try{localStorage.setItem('uvn',n)}catch(e){}return n}
   const TYPES=[['E','English'],['M','Muslim'],['H','Hindu'],['X','Mix']], GENS=[['M','Male'],['F','Female'],['X','Mix']];
@@ -1225,9 +1290,18 @@
       const r=await net({action:'sync',ops:sent,sig:(!sent.length&&SIG&&Date.now()-LASTFULL<300000)?SIG:''});
       if(r.same){LASTPULL=Date.now();ONLINE=true;return{}}   // nothing changed: skip parse, save and rebuild
       if(!r.ok){if(!$('app').classList.contains('hidden'))toast(r.error);return{err:r.error}}
-      r.res.forEach(x=>{RES[x.id]=x;if(x.x)Object.assign(XC,x.x);if(!x.ok)toast(x.error)});
-      Q=Q.slice(sent.length); LS.set('uvq',Q);
-      TAGS_OLD=!!(r.snap&&r.snap.tags===undefined); PW_OLD=!!(r.snap&&r.snap.pw===undefined); SCRIPT_VER=(r.snap&&r.snap.ver)||0; SNAP=r.snap; LS.set('uvs',SNAP); SIG=r.sig||''; LASTFULL=Date.now(); LASTPULL=Date.now(); ONLINE=true; rebuild();
+      const results=Array.isArray(r.res)?r.res:[];
+      const ack=new Set();
+      results.forEach(x=>{
+        const id=String(x.id), prev=RES[id];
+        RES[id]=x;
+        if(x.ok)ack.add(id);
+        if(x.x)Object.assign(XC,x.x);
+        if(!x.ok&&(!prev||prev.error!==x.error))toast('Sync pending: '+(x.error||'operation failed'));
+      });
+      // Never discard an operation unless the server confirms it was applied (or already applied).
+      Q=Q.filter(op=>!ack.has(String(op.id))); saveQueue();
+      TAGS_OLD=!!(r.snap&&r.snap.tags===undefined); PW_OLD=!!(r.snap&&r.snap.pw===undefined); SCRIPT_VER=(r.snap&&r.snap.ver)||0; SNAP=r.snap; LS.set('uvs',SNAP); LS.set('uvs_'+activeConn().id,SNAP); SIG=r.sig||''; LASTFULL=Date.now(); LASTPULL=Date.now(); ONLINE=true; rebuild();
       return{};
     }catch(e){ONLINE=false;window.SYNCFAIL=Date.now();LASTERR=String((e&&e.message)||e);return{net:true}}
   }
@@ -1250,14 +1324,16 @@
   }
   const fmtD=(t,full)=>new Date(t).toLocaleString('en-GB',full?{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}:{day:'2-digit',month:'short',year:'numeric'});
   function localSell(q){
-    const customer=String(q.customer||'').trim(), qty=Number(q.qty), rate=Number(q.rate)||0, fresh=q.mode==='fresh';
+    const customer=String(q.customer||'').trim(), qty=Number(q.qty), rate=(q.rate===''||q.rate==null)?0:Number(q.rate), fresh=q.mode==='fresh';
     if(!customer)return{ok:false,error:'Enter customer name'};
-    if(!qty||qty<1||qty%1)return{ok:false,error:'Enter a valid quantity'};
+    if(!Number.isInteger(qty)||qty<1)return{ok:false,error:'Enter a valid quantity'};
+    if(qty>1500)return{ok:false,error:'Maximum 1500 IDs per order'};
+    if(!Number.isFinite(rate)||rate<0||rate>1000000000)return{ok:false,error:'Rate must be a valid non-negative amount'};
     const sl={ty:q.ty||'',ge:q.ge||'',dp:q.dp||'',pg:q.pg||'',fa:q.fa||'',fk:q.fk||''}, pool=selActive(sl)?DB.stock.filter(u=>selMatch(u,sl)):DB.stock;
     if(pool.length<qty)return{ok:false,error:'Only '+pool.length+' IDs left'+(selActive(sl)?' in this selection':'')+', '+qty+' requested'};
     const uids=fresh?pool.slice(pool.length-qty):pool.slice(0,qty);
     const op={id:newId(),t:'sell',customer,rate,mode:fresh?'Fresh':'Normal',date:Date.now(),uids,n:nextN(),ty:sl.ty,ge:sl.ge,dp:sl.dp,pg:sl.pg,fa:sl.fa,fk:sl.fk};
-    Q.push(op); LS.set('uvq',Q); applyOp(op); return op;
+    Q.push(op); saveQueue(); applyOp(op); return op;
   }
   function localAdd(text,cat,fields,pass,flags,allowBad){
     const ent=parseEntries(text,fields).map(([u,p,a,c])=>[u,p||pass||'',a,c]);
@@ -1276,7 +1352,7 @@
       fresh.push(u);if(p)pws[u]=p;if(a||c)xs[u]=[a,c];
     });
     const all=fresh.concat(moved);
-    if(all.length){Object.assign(XC,xs);const op={id:newId(),t:'add',uids:all,date:Date.now(),cat:code,pws,xs,flags:bf,bad:!!allowBad};Q.push(op);LS.set('uvq',Q);applyOp(op)}
+    if(all.length){Object.assign(XC,xs);const op={id:newId(),t:'add',uids:all,date:Date.now(),cat:code,pws,xs,flags:bf,bad:!!allowBad};Q.push(op);saveQueue();applyOp(op)}
     return{ok:true,added:fresh.length,moved:moved.length,duplicates:sk.stock+sk.sold+sk.bad,skip:sk,uids:all};
   }
   async function call(req){
@@ -1335,8 +1411,17 @@
       return r;
     }catch(e){return{ok:false,error:'This needs an internet connection'}}
   }
-  SNAP=LS.get('uvs'); Q=LS.get('uvq')||[]; rebuild();
-  window.addEventListener('online',()=>{sync().then(()=>{if(!$('app').classList.contains('hidden'))renderStats(stats())})});
+  SNAP=LS.get('uvs_'+activeConn().id)||LS.get('uvs'); Q=LS.get('uvq_'+activeConn().id); if(!Array.isArray(Q))Q=LS.get('uvq')||[]; saveQueue(); rebuild();
+  window.addEventListener('online',()=>{
+    ONLINE=false;
+    toast('Internet connected — syncing saved changes');
+    setTimeout(()=>sync().then(()=>{if(!$('app').classList.contains('hidden'))renderStats(stats())}),500);
+  });
+  window.addEventListener('offline',()=>{
+    ONLINE=false;
+    if(!$('app').classList.contains('hidden')) renderStats(stats());
+    toast('Offline mode — changes are saved on this device');
+  });
 
   const esc = v => String(v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const money = n => Number(n || 0).toLocaleString();
@@ -1916,8 +2001,9 @@
   }
   async function switchConn(id){
     if(id===activeConn().id){closeModal();return}
-    if(Q.length&&!(await ask(Q.length+' change(s) have not synced to the current sheet yet. Switching will discard them. Continue?',{title:'Switch sheet?',ok:'Switch',danger:true})))return;
-    try{CACHE_KEYS.forEach(k=>localStorage.removeItem(k)); localStorage.setItem('uvact',id)}catch(e){}
+    if(Q.length&&!(await ask(Q.length+' change(s) are still waiting for this sheet. They will be saved with this connection and resume when you return. Switch sheets?',{title:'Switch sheet?',ok:'Save & switch'})))return;
+    saveQueue();
+    try{CACHE_KEYS.filter(k=>k!=='uvq').forEach(k=>localStorage.removeItem(k));localStorage.removeItem('uvq');localStorage.setItem('uvact',id)}catch(e){}
     try{if(history.state&&history.state.m)history.replaceState(null,'')}catch(e){}
     location.reload();
   }
@@ -1939,10 +2025,12 @@
     if(Q.length||(!failedRecently&&Date.now()-LASTPULL>15000))await sync();
     renderStats(stats());
   },8000);
-  window.addEventListener('online',()=>{if(!$('app').classList.contains('hidden'))sync().then(()=>renderStats(stats()))});
-
   // Auto sign-in (PIN saved on this device, valid for 24 hours)
   (async function(){
+    try{
+      await restoreOfflineCache();
+      if(SNAP || Q.length) rebuild();
+    }catch(e){}
     try{
       if(localStorage.getItem('uv')!==null){
         if(!localStorage.getItem('uvt'))lsSet('uvt',Date.now());
@@ -2014,26 +2102,59 @@
       return false;
     };
 
-    /* Backup / restore of links and settings (never the PIN) */
-    const KEYS=['uvconns','uvact','uvnames','uval','uvrepo'];
-    window.fbBackupExport=function(){
-      const data={};KEYS.forEach(k=>{const v=lsGet(k);if(v!==null)data[k]=v});
-      const o={app:'FBIDsVault',v:1,date:new Date().toISOString(),data};
-      const d=new Date(),p=n=>String(n).padStart(2,'0');
-      saveFile('FBIDsVault-backup-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.json',JSON.stringify(o,null,1),'application/json');
+    /* Encrypted backup: cached inventory/sales + pending operations + app settings. PIN and 2FA/cookies are excluded. */
+    const BACKUP_KEYS=['uvconns','uvact','uvnames','uval','uvrepo','uvlow','uvadl','uvsell'];
+    const b64=a=>{let s='';new Uint8Array(a).forEach(x=>s+=String.fromCharCode(x));return btoa(s)};
+    const un64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+    const encText=new TextEncoder(),decText=new TextDecoder();
+    async function backupKey(pass,salt){
+      const raw=await crypto.subtle.importKey('raw',encText.encode(pass),'PBKDF2',false,['deriveKey']);
+      return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},raw,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    }
+    window.fbBackupExport=async function(){
+      const m=g('bkMsg');m.textContent='';
+      const pass=prompt('Create a backup password (at least 10 characters). You will need it to restore this file.');
+      if(pass===null)return;
+      if(pass.length<10){m.textContent='Use a backup password with at least 10 characters.';return}
+      if(!window.crypto||!crypto.subtle){m.textContent='Encrypted backup is not supported in this browser. Use the latest Chrome over HTTPS.';return}
+      try{
+        const settings={};BACKUP_KEYS.forEach(k=>{const v=lsGet(k);if(v!==null)settings[k]=v});
+        const payload={app:'FBIDsVault',v:2,date:new Date().toISOString(),connection:{id:activeConn().id,url:activeConn().url},settings,snapshot:SNAP,queue:Q};
+        const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await backupKey(pass,salt);
+        const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,encText.encode(JSON.stringify(payload)));
+        const file={app:'FBIDsVault',v:2,alg:'PBKDF2-SHA256/AES-256-GCM',salt:b64(salt),iv:b64(iv),cipher:b64(cipher)};
+        const d=new Date(),p=n=>String(n).padStart(2,'0');
+        saveFile('FBIDsVault-full-backup-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.json',JSON.stringify(file),'application/json');
+        m.style.color='var(--ok)';m.textContent='Encrypted backup created. Keep the password safe; it cannot be recovered.';
+      }catch(e){m.textContent='Backup failed: '+((e&&e.message)||'browser encryption error')}
     };
     window.fbBackupImport=function(inp){
       const m=g('bkMsg'),f=inp.files&&inp.files[0];m.textContent='';m.style.color='';
       if(!f)return;
       const r=new FileReader();
-      r.onload=()=>{
+      r.onload=async()=>{
         try{
-          const o=JSON.parse(String(r.result));
-          if(!o||o.app!=='FBIDsVault'||!o.data||typeof o.data!=='object')throw 0;
-          let n=0;KEYS.forEach(k=>{if(typeof o.data[k]==='string'){lsPut(k,o.data[k]);n++}});
-          m.style.color='var(--ok)';m.textContent='Backup restored. Reloading...';
-          setTimeout(()=>location.reload(),700);
-        }catch(e){m.textContent='This file is not an FB IDs Vault backup.'}
+          const file=JSON.parse(String(r.result));
+          if(!file||file.app!=='FBIDsVault'||file.v!==2||file.alg!=='PBKDF2-SHA256/AES-256-GCM')throw new Error('Unsupported backup format');
+          if(!window.crypto||!crypto.subtle)throw new Error('Encrypted backup is not supported in this browser');
+          const pass=prompt('Enter the password used when this backup was created.');
+          if(pass===null){inp.value='';return}
+          const key=await backupKey(pass,un64(file.salt));
+          const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:un64(file.iv)},key,un64(file.cipher));
+          const o=JSON.parse(decText.decode(plain));
+          if(!o||o.app!=='FBIDsVault'||o.v!==2||!o.settings||!Array.isArray(o.queue))throw new Error('Backup contents are invalid');
+          BACKUP_KEYS.forEach(k=>{if(typeof o.settings[k]==='string')lsPut(k,o.settings[k])});
+          const current=activeConn();
+          if(o.connection&&o.connection.url===current.url){
+            if(o.snapshot&&typeof o.snapshot==='object'){lsPut('uvs',JSON.stringify(o.snapshot));lsPut('uvs_'+current.id,JSON.stringify(o.snapshot));}
+            lsPut('uvq_'+current.id,JSON.stringify(o.queue));lsPut('uvq',JSON.stringify(o.queue));
+          }else{
+            m.textContent='Settings restored. Cached stock/sales were not restored because this backup belongs to a different Google Sheet.';
+            m.style.color='var(--warn)';inp.value='';setTimeout(()=>location.reload(),1400);return;
+          }
+          m.style.color='var(--ok)';m.textContent='Encrypted backup restored. Reloading...';
+          setTimeout(()=>location.reload(),900);
+        }catch(e){m.style.color='var(--bad)';m.textContent='Restore failed. Check the backup password and file. '+((e&&e.message)||'')}
         inp.value='';
       };
       r.onerror=()=>{m.textContent='Could not read the file.'};
@@ -2068,12 +2189,11 @@
     /* --- Load everything in the background so every tab opens instantly --- */
     function warm(){setTimeout(()=>{try{loadHistory()}catch(e){}try{loadCust()}catch(e){}},600)}
     let stopped=false;
+    // The main 8-second scheduler owns synchronization; this timer only refreshes
+    // non-critical history/customer panels to avoid duplicate sync traffic.
     setInterval(()=>{
       if(stopped||!appOpen()||document.hidden||(typeof BUSY!=='undefined'&&BUSY>0))return;
-      sync().then(r=>{
-        if(r&&r.err){stopped=true;return}          // wrong PIN or script problem: stop quietly, the normal sync will report it
-        try{renderStats(stats())}catch(e){} warm();
-      }).catch(()=>{});
+      warm();
     },90000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)stopped=false});
 
@@ -2180,5 +2300,18 @@
     if(typeof _enter==='function'){window.enter=function(){const r=_enter.apply(this,arguments);try{restoreSell()}catch(e){}try{warm();autoUpd()}catch(e){}return r}}
   })();
 </script>
+
+<script>
+  /* Offline app-shell cache. Works when this app is hosted on HTTPS (or localhost). */
+  (function(){
+    if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(function(){
+        console.warn('Offline app-shell caching is unavailable on this hosting path.');
+      });
+    });
+  })();
+</script>
+
 </body>
 </html>
