@@ -459,14 +459,14 @@
     .pwrow span{color:var(--muted);font-weight:600}
     .pwrow .sp{flex:1}
     .verwarn{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:var(--r-sm);padding:10px 14px;font-size:13px;line-height:1.5}
-    /* ===== Themed scrollbars ===== */
-    *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 40%,transparent) transparent}
-    ::-webkit-scrollbar{width:10px;height:10px}
-    ::-webkit-scrollbar-track{background:transparent}
-    ::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--muted) 38%,transparent);border-radius:99px;border:2px solid transparent;background-clip:content-box}
-    ::-webkit-scrollbar-thumb:hover{background:var(--brand);background-clip:content-box}
+    /* ===== Themed scrollbars (app theme colour, every scroll area) ===== */
+    *{scrollbar-width:thin;scrollbar-color:var(--brand) color-mix(in srgb,var(--brand) 12%,transparent)}
+    ::-webkit-scrollbar{width:8px;height:8px}
+    ::-webkit-scrollbar-track{background:color-mix(in srgb,var(--brand) 10%,transparent);border-radius:99px}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--brand),var(--brand-d));border-radius:99px;border:1.5px solid transparent;background-clip:padding-box}
+    ::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:var(--brand-d);background-clip:padding-box}
     ::-webkit-scrollbar-corner{background:transparent}
-    .uids::-webkit-scrollbar,textarea::-webkit-scrollbar{width:8px;height:8px}
+    .uids::-webkit-scrollbar,textarea::-webkit-scrollbar,.namedd::-webkit-scrollbar{width:7px;height:7px}
     /* ===== Progress bar ===== */
     #loader{position:fixed;top:0;left:0;right:0;height:3px;z-index:120;opacity:0;pointer-events:none;transition:opacity .2s;overflow:hidden;background:color-mix(in srgb,var(--brand) 14%,transparent)}
     #loader.on{opacity:1}
@@ -621,13 +621,11 @@
 
     /* ===== Custom name suggestions (themed) ===== */
     .ddwrap{position:relative}
-    .namedd{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;max-height:224px;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px;box-shadow:0 18px 40px -16px rgba(0,0,0,.45);scrollbar-width:thin;scrollbar-color:var(--brand) transparent}
+    .namedd{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;max-height:224px;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px;box-shadow:0 18px 40px -16px rgba(0,0,0,.45);}
     .namedd.hidden{display:none}
     .namedd::-webkit-scrollbar{width:8px}
     .namedd::-webkit-scrollbar-track{background:transparent;margin:6px 0}
-    .namedd::-webkit-scrollbar-thumb{background:var(--brand-soft);border:2px solid transparent;background-clip:content-box;border-radius:99px;box-shadow:inset 0 0 0 20px color-mix(in srgb,var(--brand) 55%,transparent)}
-    .namedd::-webkit-scrollbar-thumb:hover{box-shadow:inset 0 0 0 20px var(--brand)}
-    .ddi{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;font-size:14px;padding:10px 12px;border-radius:9px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+            .ddi{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;font-size:14px;padding:10px 12px;border-radius:9px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .ddi:hover,.ddi:active,.ddi:focus{background:var(--brand-soft);color:var(--brand);outline:0}
 
     /* ===== Settings overview ===== */
@@ -692,6 +690,18 @@
     .lg-foot{margin-top:14px;font-size:11.5px;color:var(--muted);opacity:.8;display:flex;gap:6px;justify-content:center;align-items:center}
     .lg-foot .ic{width:13px;height:13px}
     @media(prefers-reduced-motion:reduce){.lg-bg,.lg-badge::after{animation:none}}
+
+    /* ===== DP separate ===== */
+    .dpbig .opts{gap:8px}
+    .dpbig .opt{flex:1 1 0;padding:9px 8px;font-size:13.5px;font-weight:800;border-radius:12px}
+    .dpbig .opt.on{background:linear-gradient(135deg,#19B98A,#0E9F6E);color:#fff;border-color:transparent;box-shadow:0 8px 18px -10px rgba(14,159,110,.9)}
+    .dpbig .opt:first-child.on{background:linear-gradient(135deg,var(--brand),var(--brand-d))}
+    .dpbig .opt:last-child.on{background:linear-gradient(135deg,#667085,#475467)}
+    .cgh{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 2px}
+    .cgh:first-child{margin-top:0}
+    .cgh span{font-size:13px;color:var(--ink)}
+    .cgh.dp{color:var(--ok)}
+    .tag.dpt{background:var(--ok-soft);color:var(--ok)}
   </style>
 </head>
 <body>
@@ -817,10 +827,10 @@
             <button type="button" data-m="fresh" onclick="setMode('fresh')"><svg class="ic"><use href="#i-zap"/></svg><b>Fresh</b><small>Newest added IDs</small></button>
           </div>
           <div class="cmp">
+            <div class="field dpbig hidden" id="gpDp"><label>Profile photo (DP)</label><div class="opts" id="selDpS" role="radiogroup" aria-label="DP"></div></div>
             <div class="field" id="gpTy"><label>Names type</label><div class="opts" id="selTyS" role="radiogroup" aria-label="Names type"></div></div>
             <div class="field" id="gpGe"><label>Gender</label><div class="opts" id="selGeS" role="radiogroup" aria-label="Gender"></div></div>
             <div class="fpair">
-              <div class="field hidden" id="gpDp"><label>DP (profile photo)</label><div class="opts" id="selDpS" role="radiogroup" aria-label="DP"></div></div>
               <div class="field hidden" id="gpPg"><label>Page</label><div class="opts" id="selPgS" role="radiogroup" aria-label="Page"></div></div>
               <div class="field hidden" id="gpFa"><label>2FA</label><div class="opts" id="selFaS" role="radiogroup" aria-label="2FA"></div></div>
               <div class="field hidden" id="gpFk"><label>Cookies</label><div class="opts" id="selFkS" role="radiogroup" aria-label="Cookies"></div></div>
@@ -840,7 +850,7 @@
         </section>
         <div class="stack">
           <section class="card"><h3>Last 7 days</h3><p class="sub">IDs sold per day</p><div class="bars" id="chart"></div></section>
-          <section class="card"><h3>Stock by category</h3><p class="sub">Remaining IDs. Older untagged IDs are counted under Mix / Mix.</p><table class="cgrid" id="cgrid"></table><div class="selinfo" id="flagInfo" style="margin:12px 0 0"></div></section>
+          <section class="card"><h3>Stock by category</h3><p class="sub">Remaining IDs. Older untagged IDs are counted under Mix / Mix.</p><div id="cgrid"></div><div class="selinfo" id="flagInfo" style="margin:12px 0 0"></div></section>
           <section class="card"><h3>Stock level</h3><p class="sub" id="stTxt"></p><div class="meter" id="meter"><i></i></div></section>
         </div>
       </div>
@@ -880,7 +890,8 @@
           <div class="opts sm" id="addFields"></div>
           <div class="fmtbox" id="fmtBox"></div></div>
         <div class="field" id="pwSame"><input id="addPass" oninput="cnt()" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Same password for every ID (optional)"></div>
-        <div class="field"><label>Extras (applies to every ID in this batch)</label><div class="opts sm" id="addFlagS"></div></div>
+        <div class="field"><label>Profile photo (DP) of this batch</label><div class="opts sm" id="addDpS" role="radiogroup" aria-label="DP"></div></div>
+        <div class="field"><label>Page</label><div class="opts sm" id="addFlagS"></div></div>
         <div class="hint"><svg class="ic"><use href="#i-check"/></svg>New IDs always go to the bottom, in the order you paste them: first line = oldest (upper), last line = freshest (bottom).</div>
         <div class="lbrow"><label for="addTxt">UIDs</label>
           <div class="tools"><button type="button" class="mini" onclick="pasteIds()"><svg class="ic"><use href="#i-copy"/></svg>Paste</button><button type="button" class="mini" onclick="clearIds()"><svg class="ic"><use href="#i-x"/></svg>Clear</button></div></div>
@@ -1146,6 +1157,7 @@
   const ADDF={dp:false,pg:false};
   function addFlags(){return (ADDF.dp?'D':'')+(ADDF.pg?'P':'')}
   function togAddF(k){ADDF[k]=!ADDF[k];drawCats()}
+  function setAddDp(v){ADDF.dp=!!v;drawCats();try{cnt()}catch(e){}}
   function addFl(u,f){if(!f)return;let t=DB.fl[u]||'';for(const ch of f)if(t.indexOf(ch)<0)t+=ch;DB.fl[u]=t}
   const lines=a=>a.map(fmt).join('\n');
   function parseEntries(text,fields){   // fields = which columns follow the UID, in order: 'p' password, 'a' 2FA, 'c' cookies (returns [[uid,pass,auth,cookie]])
@@ -1377,7 +1389,7 @@
       else if($('addPass').value.trim())c.push('<span class="ac ok">same password on all</span>');
       if(ADDS.a)c.push(chip(nOf(2),'2FA'));
       if(ADDS.c)c.push(chip(nOf(3),'cookies'));
-      if(ADDF.dp)c.push('<span class="ac ok">DP</span>');if(ADDF.pg)c.push('<span class="ac ok">Page created</span>');
+      c.push('<span class="ac '+(ADDF.dp?'ok':'')+'">'+(ADDF.dp?'With DP':'Without DP')+'</span>');if(ADDF.pg)c.push('<span class="ac ok">Page created</span>');
       c.push('<span class="ac">to the bottom, in pasted order</span>');
     }
     $('addChips').innerHTML=c.join('');
@@ -1498,20 +1510,26 @@
       const ty=[['','Any']].concat(TYPES), ge=[['','Any']].concat(GENS);
       grp('gpTy','selTyS',ty,'ty','selTy',pick(ty,'ty').length>2);
       grp('gpGe','selGeS',ge,'ge','selGe',pick(ge,'ge').length>2);
-      grp('gpDp','selDpS',YN,'dp','selDp',(W.dp.y||0)>0);
+      grp('gpDp','selDpS',[['','All'],['y','With DP'],['n','Without DP']],'dp','selDp',(W.dp.y||0)>0&&(W.dp.n||0)>0);   // only when you really have both kinds
       grp('gpPg','selPgS',YN,'pg','selPg',(W.pg.y||0)>0);
       grp('gpFa','selFaS',YN,'fa','selFa',(W.fa.y||0)>0);
       grp('gpFk','selFkS',YN,'fk','selFk',(W.fk.y||0)>0);
     }
     put('addTyS',optsHtml([TYPES[3]].concat(TYPES.slice(0,3)),ADDC.ty,'addTy'));
     put('addGeS',optsHtml([GENS[2]].concat(GENS.slice(0,2)),ADDC.ge,'addGe'));
-    put('addFlagS',[['dp','Has DP'],['pg','Page created']].map(x=>'<button type="button" class="opt'+(ADDF[x[0]]?' on':'')+'" role="checkbox" aria-checked="'+!!ADDF[x[0]]+'" onclick="togAddF(\''+x[0]+'\')">'+x[1]+'</button>').join(''));
+    put('addDpS',[[false,'Without DP'],[true,'With DP']].map(x=>'<button type="button" class="opt'+(!!ADDF.dp===x[0]?' on':'')+'" role="radio" aria-checked="'+(!!ADDF.dp===x[0])+'" onclick="setAddDp('+x[0]+')">'+x[1]+'</button>').join(''));
+    put('addFlagS',[['pg','Page already created']].map(x=>'<button type="button" class="opt'+(ADDF[x[0]]?' on':'')+'" role="checkbox" aria-checked="'+!!ADDF[x[0]]+'" onclick="togAddF(\''+x[0]+'\')">'+x[1]+'</button>').join(''));
     {const fc={D:0,P:0,A:0,K:0};DB.stock.forEach(u=>{const f=flOf(u);for(const k in fc)if(f.indexOf(k)>=0)fc[k]++});const fi=$('flagInfo');if(fi)fi.textContent='With DP: '+money(fc.D)+' \u00b7 Page created: '+money(fc.P)+' \u00b7 2FA: '+money(fc.A)+' \u00b7 Cookies: '+money(fc.K)}
-    $('addInfo').textContent=catName(ADDC.ty,ADDC.ge).replace(', ',' \u00b7 ')+(ADDF.dp?' \u00b7 DP':'')+(ADDF.pg?' \u00b7 Page':'');
+    $('addInfo').textContent=catName(ADDC.ty,ADDC.ge).replace(', ',' \u00b7 ')+(ADDF.dp?' \u00b7 With DP':' \u00b7 Without DP')+(ADDF.pg?' \u00b7 Page':'');
     $('addWarn').classList.toggle('hidden',!TAGS_OLD); try{cnt()}catch(e){}
     $('selInfo').textContent=money(CT.sel)+' IDs available'+(selActive(SEL)?' in this selection':''); try{updTot()}catch(e){}
-    $('cgrid').innerHTML='<tr><th></th>'+GENS.map(g=>'<th>'+g[1]+'</th>').join('')+'<th>Total</th></tr>'+TYPES.map(t=>'<tr><td>'+t[1]+'</td>'+GENS.map(g=>{const n=CATS[t[0]+g[0]]||0;return'<td class="'+(n?'':'z')+'">'+n+'</td>'}).join('')+'<td><b>'+cc(CATS,t[0],'')+'</b></td></tr>').join('')
-      +'<tr><td>All</td>'+GENS.map(g=>'<td><b>'+cc(CATS,'',g[0])+'</b></td>').join('')+'<td><b>'+cc(CATS,'','')+'</b></td></tr>';
+    {
+      const cD={},cN={};let nD=0,nN=0;
+      DB.stock.forEach(u=>{const c=catOf(u);if(flOf(u).indexOf('D')>=0){cD[c]=(cD[c]||0)+1;nD++}else{cN[c]=(cN[c]||0)+1;nN++}});
+      const grid=c=>'<table class="cgrid"><tr><th></th>'+GENS.map(g=>'<th>'+g[1]+'</th>').join('')+'<th>Total</th></tr>'+TYPES.map(t=>'<tr><td>'+t[1]+'</td>'+GENS.map(g=>{const n=c[t[0]+g[0]]||0;return'<td class="'+(n?'':'z')+'">'+n+'</td>'}).join('')+'<td><b>'+cc(c,t[0],'')+'</b></td></tr>').join('')
+        +'<tr><td>All</td>'+GENS.map(g=>'<td><b>'+cc(c,'',g[0])+'</b></td>').join('')+'<td><b>'+cc(c,'','')+'</b></td></tr></table>';
+      $('cgrid').innerHTML=nD?'<div class="cgh dp">With DP <span>'+money(nD)+'</span></div>'+grid(cD)+'<div class="cgh">Without DP <span>'+money(nN)+'</span></div>'+grid(cN):grid(cN);
+    }
   }
   const selTy=k=>{SEL.ty=k;drawCats()}, selGe=k=>{SEL.ge=k;drawCats()}, selDp=k=>{SEL.dp=k;drawCats()}, selPg=k=>{SEL.pg=k;drawCats()}, selFa=k=>{SEL.fa=k;drawCats()}, selFk=k=>{SEL.fk=k;drawCats()}, addTy=k=>{ADDC.ty=k;drawCats()}, addGe=k=>{ADDC.ge=k;drawCats()};
   function renderStats(s){
@@ -1600,8 +1618,9 @@
     const r=await run({action:'history',from:$('fFrom').value,to:$('fTo').value,customer:$('fCust').value}); if(!r)return;
     ROWS=r.history; const box=$('hist');
     if(!ROWS.length){box.innerHTML='<div class="empty">No orders found.</div>';return;}
-    box.innerHTML=ROWS.map((h,i)=>'<div class="h-item'+(h.status==='Undone'?' undone':'')+'"><div class="who clk" onclick="openOrderRow('+i+')"><b>'+esc(h.customer)+' '+(h.mode==='Fresh'?'<span class="tag">Fresh</span>':'')+'</b><span>Order #'+h.order+', '+esc(h.date)+(h.amount?', '+money(h.amount):'')+(h.status==='Undone'?', undone':h.status==='Pending'?', waiting to sync':'')+'</span></div><span class="qty">'+h.qty+'</span><button class="btn sm" onclick="openOrderRow('+i+')">'+ic('eye')+'View</button><button class="btn sm ghost" onclick="copyRow('+i+')">'+ic('copy')+'Copy</button><button class="btn sm ghost" onclick="saveRow('+i+')">'+ic('down')+'.txt</button><button class="btn sm ghost" onclick="shareRow('+i+')">'+ic('share')+'Share</button>'+(h.status==='Undone'||h.status==='Pending'?'':'<button class="btn sm ghost" onclick="undo('+h.order+')">'+ic('undo')+'Undo</button>')+'</div>').join('');
+    box.innerHTML=ROWS.map((h,i)=>'<div class="h-item'+(h.status==='Undone'?' undone':'')+'"><div class="who clk" onclick="openOrderRow('+i+')"><b>'+esc(h.customer)+' '+(h.mode==='Fresh'?'<span class="tag">Fresh</span>':'')+dpTag(h.uids)+'</b><span>Order #'+h.order+', '+esc(h.date)+(h.amount?', '+money(h.amount):'')+(h.status==='Undone'?', undone':h.status==='Pending'?', waiting to sync':'')+'</span></div><span class="qty">'+h.qty+'</span><button class="btn sm" onclick="openOrderRow('+i+')">'+ic('eye')+'View</button><button class="btn sm ghost" onclick="copyRow('+i+')">'+ic('copy')+'Copy</button><button class="btn sm ghost" onclick="saveRow('+i+')">'+ic('down')+'.txt</button><button class="btn sm ghost" onclick="shareRow('+i+')">'+ic('share')+'Share</button>'+(h.status==='Undone'||h.status==='Pending'?'':'<button class="btn sm ghost" onclick="undo('+h.order+')">'+ic('undo')+'Undo</button>')+'</div>').join('');
   }
+  function dpTag(u){const n=u.filter(x=>flOf(x).indexOf('D')>=0).length;return n?'<span class="tag dpt">'+(n===u.length?'DP':'DP '+n+'/'+u.length)+'</span>':''}
   const copyRow=async i=>{await ensureX(ROWS[i].uids);copyText(lines(ROWS[i].uids))};
   const saveRow=async i=>{await ensureX(ROWS[i].uids);saveTxt(lines(ROWS[i].uids),ROWS[i].customer+'_order'+ROWS[i].order)};
   async function undo(o,fromModal){
